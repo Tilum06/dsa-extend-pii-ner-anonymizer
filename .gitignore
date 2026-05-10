@@ -41,13 +41,20 @@ env/
 htmlcov/
 .tox/
 
-# Data files (raw data)
-data/raw/
-!data/raw/.gitkeep
-
 # Results and outputs
 result/
-report/
+
+# Report LaTeX and build files
+report/*.aux
+report/*.log
+report/*.out
+report/*.toc
+report/*.lof
+report/*.lot
+report/*.fls
+report/*.fdb_latexmk
+report/*.synctex.gz
+report/*.pdf
 
 # Jupyter Notebook
 .ipynb_checkpoints/
