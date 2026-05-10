@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PII Detection & Anonymization Demo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>PII Detection & Anonymization</h1>
+            <p class="subtitle">Phát hiện và ẩn danh thông tin cá nhân</p>
+        </header>
+
+        <main>
+            <div class="input-section">
+                <label for="inputText">Nhập văn bản:</label>
+                <textarea 
+                    id="inputText" 
+                    placeholder="Nhập đoạn văn bản chứa thông tin cá nhân..."
+                    rows="6"
+                ></textarea>
+                <button id="processBtn" onclick="processText()">Xử lý</button>
+                <button id="clearBtn" onclick="clearAll()">Xóa</button>
+            </div>
+
+            <div id="loadingSpinner" class="loading hidden">
+                <div class="spinner"></div>
+                <p>Đang xử lý...</p>
+            </div>
+
+            <div id="resultSection" class="result-section hidden">
+                <div class="output-section">
+                    <h2>Văn bản đã được xử lý:</h2>
+                    <div id="anonymizedText" class="output-text"></div>
+                </div>
+
+                <div class="entities-section">
+                    <h2>Các thực thể được phát hiện:</h2>
+                    <div id="entitiesContainer" class="entities-container">
+                        <table id="entitiesTable">
+                            <thead>
+                                <tr>
+                                    <th>Loại</th>
+                                    <th>Nội dung</th>
+                                    <th>Vị trí bắt đầu</th>
+                                    <th>Vị trí kết thúc</th>
+                                </tr>
+                            </thead>
+                            <tbody id="entitiesBody">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <button id="copyBtn" onclick="copyToClipboard()">Sao chép văn bản xử lý</button>
+            </div>
+
+            <div id="errorSection" class="error-section hidden">
+                <div class="error-message">
+                    <p id="errorText"></p>
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            <p>&copy; 2026 PII Detection System. All rights reserved.</p>
+        </footer>
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
