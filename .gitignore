@@ -41,8 +41,6 @@ env/
 htmlcov/
 .tox/
 
-# Results and outputs
-result/
 
 # Report LaTeX and build files
 report/*.aux
