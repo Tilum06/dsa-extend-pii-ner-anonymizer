@@ -214,7 +214,7 @@ def detect_phone(text: str) -> list[dict[str, Any]]:
         # Guard against matching part of a larger alphanumeric token.
         # Check character immediately before start and after end.
         if start > 0 and (text[start - 1].isalnum() or text[start - 1] == '@'):
-            continue
+            continue    
         if end < len(text) and (text[end].isalnum() or text[end] == '@'):
             continue
 
