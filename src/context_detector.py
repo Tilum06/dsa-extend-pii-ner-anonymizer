@@ -17,17 +17,41 @@ _USERNAME_RE = re.compile(r"@?[A-Za-z0-9_][\w.\-]*")
 
 # Words that stop name collection (common English words that aren't names)
 _NAME_STOPWORDS = {
+    # conjunctions / prepositions / articles
     "and", "or", "but", "the", "a", "an", "in", "at", "on", "of", "to",
-    "with", "for", "from", "by", "is", "was", "are", "were", "i", "you",
-    "he", "she", "they", "we", "my", "your", "his", "her", "their", "our",
+    "with", "for", "from", "by", "as", "into", "via", "about",
+    # pronouns
+    "i", "you", "he", "she", "they", "we", "it",
+    "my", "your", "his", "her", "their", "our", "its",
+    # common to-be / auxiliary verbs (base + conjugated)
+    "is", "was", "are", "were", "be", "been", "being",
+    "has", "have", "had", "do", "does", "did",
+    "will", "would", "could", "should", "may", "might", "shall",
+    # common action verbs 
+    "works", "worked", "work",
+    "lives", "lived", "live",
+    "graduated", "graduate",
+    "studied", "studies", "study",
+    "joined", "joins", "join",
+    "founded", "founds", "found",
+    "manages", "managed", "manage",
+    "went", "goes", "go",
+    "said", "says", "say",
+    "made", "makes", "make",
+    "took", "takes", "take",
+    "came", "comes", "come",
+    "got", "gets", "get",
+    "knew", "knows", "know",
+    "called", "calls", "call",
 }
 
+_VERB_SUFFIX_RE = re.compile(
+    r".{3,}(ing|tion|sion|ment|ed|ness)$",
+    re.IGNORECASE,
+)
+
 def detect_name(text: str) -> list[dict[str, Any]]:
-    """
-    Detect NAME spans using context rules.
-    Looks for strong trigger phrases then collects 1-4 consecutive
-    title-cased tokens (no digits, not stop-words) as the name.
-    """
+    """Detect NAME spans using context rules."""
     entities: list[dict[str, Any]] = []
     lower = text.lower()
     seen_spans: set[tuple[int, int]] = set()
@@ -40,7 +64,6 @@ def detect_name(text: str) -> list[dict[str, Any]]:
                 break
  
             after = trigger_pos + len(trigger)
-            # Skip whitespace and optional colon/dash separators
             while after < len(text) and text[after] in " \t:":
                 after += 1
  
@@ -49,19 +72,24 @@ def detect_name(text: str) -> list[dict[str, Any]]:
  
             for m in re.finditer(r"\S+", text[after:]):
                 token = m.group()
-                # Strip trailing punctuation for analysis
                 clean = token.rstrip(".,;:!?\"'")
-                # Must start with uppercase, contain no digits, not be a stopword
-                if (clean
-                        and clean[0].isupper()
-                        and not any(c.isdigit() for c in clean)
-                        and clean.lower() not in _NAME_STOPWORDS):
-                    if name_start is None:
-                        name_start = after + m.start()
-                    name_tokens.append(clean)
-                    if len(name_tokens) == 4:
-                        break
-                else:
+ 
+                if not (clean and clean[0].isupper() and not any(c.isdigit() for c in clean)):
+                    break
+ 
+                # Stop if we hit stopwords
+                if clean.lower() in _NAME_STOPWORDS:
+                    break
+ 
+                # Stop if it looks like a verb (only after we have at least 1 token)
+                if name_tokens and _looks_like_verb(clean):
+                    break
+ 
+                if name_start is None:
+                    name_start = after + m.start()
+                name_tokens.append(clean)
+ 
+                if len(name_tokens) == 4:
                     break
  
             if name_tokens and name_start is not None:
@@ -82,11 +110,7 @@ def detect_name(text: str) -> list[dict[str, Any]]:
  
  
 def detect_username(text: str) -> list[dict[str, Any]]:
-    """
-    Detect USERNAME spans using context rules.
-    Looks for trigger keywords followed by a separator and a username-shaped token.
-    Weak triggers (account, handle) require an explicit separator to avoid false positives like "account manager".
-    """
+    """Detect USERNAME spans using context rules."""
     entities: list[dict[str, Any]] = []
     lower = text.lower()
  
@@ -99,7 +123,6 @@ def detect_username(text: str) -> list[dict[str, Any]]:
  
             end_of_trigger = trigger_pos + len(trigger)
  
-            # Whole-word boundary check
             if end_of_trigger < len(lower) and lower[end_of_trigger].isalpha():
                 search_start = trigger_pos + 1
                 continue
@@ -110,7 +133,6 @@ def detect_username(text: str) -> list[dict[str, Any]]:
             after = end_of_trigger
  
             if trigger in _WEAK_USERNAME_TRIGGERS:
-                # Require explicit separator (: or " is ")
                 peek = after
                 while peek < len(text) and text[peek] == " ":
                     peek += 1
@@ -150,11 +172,7 @@ def detect_username(text: str) -> list[dict[str, Any]]:
  
  
 def detect_address(text: str) -> list[dict[str, Any]]:
-    """
-    Detect ADDRESS spans using context rules.
-    Scans for address trigger keywords then extracts the surrounding clause
-    as the address value, stripping leading filler words.
-    """
+    """Detect ADDRESS spans using context rules."""
     entities: list[dict[str, Any]] = []
     lower = text.lower()
  
@@ -167,7 +185,6 @@ def detect_address(text: str) -> list[dict[str, Any]]:
  
             end_of_trigger = trigger_pos + len(trigger)
  
-            # Whole-word check (skip if letters follow, e.g. "streets")
             if end_of_trigger < len(lower) and lower[end_of_trigger].isalpha():
                 search_start = trigger_pos + 1
                 continue
@@ -244,3 +261,7 @@ def detect_by_context(text: str) -> list[dict[str, Any]]:
     entities.extend(detect_address(text))
     entities.sort(key=lambda e: e["start"])
     return entities
+
+def _looks_like_verb(token: str) -> bool:
+    """Return True if the token looks like a verb."""
+    return bool(_VERB_SUFFIX_RE.fullmatch(token))
