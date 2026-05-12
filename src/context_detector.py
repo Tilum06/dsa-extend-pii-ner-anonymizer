@@ -41,6 +41,80 @@ _TLDS = {
     "me", "tv", "app", "dev", "ai",
 }
 
+# Label triggers — sau dấu ":" gần như chắc chắn là tên
+_LABEL_TRIGGERS = [
+    # Dạng đơn giản
+    "contact person:", "submitted by:", "author:", "written by:",
+    "signed by:", "prepared by:", "reported by:", "from:",
+    "sender:", "recipient:", "applicant:", "client:", "patient:",
+    # Dạng "X Information:" / "X Info:"
+    "contact information:", "contact info:", "personal information:",
+    "personal info:", "user information:", "profile information:",
+    # Dạng "X Details:" / "X Data:"
+    "contact details:", "personal details:", "user details:",
+    "account details:", "profile details:",
+    # Dạng khác hay gặp
+    "full name:", "name:", "my name is",
+    "regards,", "sincerely,", "best regards,",
+]
+
+# Job titles dùng để dừng thu thập candidate (tránh "Mieko Mitsubishi Account Manager")
+_JOB_TITLE_STOPWORDS = {
+    "account", "manager", "director", "officer", "president", "executive",
+    "engineer", "developer", "designer", "analyst", "consultant", "architect",
+    "coordinator", "administrator", "supervisor", "specialist", "associate",
+    "representative", "assistant", "secretary", "treasurer", "chairman",
+    "partner", "founder", "owner", "principal", "professor", "doctor",
+    "attorney", "counsel", "advisor", "agent", "inspector", "auditor",
+}
+
+# Suffixes chỉ tổ chức/địa điểm — candidate kết thúc bằng các từ này
+# thì là tên công ty/trường/địa điểm, KHÔNG phải tên người
+_ORG_PLACE_SUFFIXES = {
+    # Loại hình công ty / doanh nghiệp
+    "company", "corporation", "corp", "incorporated", "inc",
+    "limited", "ltd", "llc", "plc", "group", "holdings", "ventures",
+    "enterprise", "enterprises", "associates", "partners", "partnership",
+    "agency", "bureau", "firm", "studio", "studios", "lab", "labs",
+    "solutions", "services", "systems", "technologies", "tech",
+    "international", "global", "national",
+
+    # Loại hình tổ chức / cơ quan
+    "organization", "organisation", "foundation", "institute", "institution",
+    "association", "society", "committee", "commission", "council",
+    "department", "division", "branch", "office", "ministry",
+    "authority", "board", "federation", "union", "network", "alliance",
+    "center", "centre", "clinic", "hospital",
+
+    # Trường học
+    "university", "college", "school", "academy", "institute",
+    "polytechnic", "faculty", "campus",
+
+    # Địa điểm / cơ sở vật chất
+    "hotel", "motel", "resort", "hostel", "inn",
+    "restaurant", "cafe", "bar", "pub", "club", "lounge",
+    "mall", "plaza", "tower", "towers", "building", "complex",
+    "stadium", "arena", "theater", "theatre", "cinema", "gallery",
+    "museum", "library", "park", "garden", "gardens",
+    "airport", "station", "terminal", "port", "harbor",
+    "market", "store", "shop", "outlet", "warehouse",
+    "bank", "exchange",
+}
+
+# Từ thường đứng cuối label header (e.g. "Contact Information:", "Personal Details:")
+# Token này viết hoa nhưng KHÔNG phải tên người — loại khỏi candidate group
+_LABEL_HEADER_WORDS = {
+    # Từ chỉ loại thông tin
+    "information", "info", "details", "data", "summary", "overview",
+    "profile", "record", "records", "section", "form", "sheet",
+    "report", "note", "notes", "description", "statement",
+    # Từ label hay đứng trước ":" chỉ vai trò / quan hệ
+    "witness", "nominee", "supervisor", "referee", "guarantor",
+    "beneficiary", "trustee", "guardian", "executor", "delegate",
+    "representative", "spokesperson", "liaison", "contact", "emergency",
+    "primary", "secondary", "alternate", "backup",
+}
+
 # Stopwords for name token collection
 _NAME_STOPWORDS = {
     "and", "or", "but", "the", "a", "an", "in", "at", "on", "of", "to",
@@ -64,6 +138,7 @@ _NAME_STOPWORDS = {
 _VERB_SUFFIX_RE = re.compile(r".{3,}(ing|tion|sion|ment|ed|ness)$", re.IGNORECASE)
 
 # Special characters that disqualify a token from being part of a name
+# Lưu ý: dấu "-" KHÔNG nằm trong list này vì tên có thể có dạng "Mary-Jane"
 _SPECIAL_CHARS_RE = re.compile(r"[~!@#$%^&*()\[\]{};=+?\"']")
 
 # Pronouns
@@ -198,7 +273,8 @@ def _extract_name_candidates(text: str) -> list[tuple[str, int, int]]:
     i = 0
     while i < len(tokens_with_pos):
         token, pos = tokens_with_pos[i]
-        clean = token.rstrip(".,;:!?\"'")
+        # Strip cả dấu mở ngoặc/nháy ở đầu lẫn dấu câu ở cuối
+        clean = token.lstrip("(\"'").rstrip(".,;:!?\"')")
 
         # Must start with uppercase letter
         if not (clean and clean[0].isupper()):
@@ -215,8 +291,9 @@ def _extract_name_candidates(text: str) -> list[tuple[str, int, int]]:
             i += 1
             continue
 
-        # Skip "As" at start (e.g. "As Mieko Mitsubishi,")
-        if clean.lower() == "as":
+        # Skip "As" chỉ khi nó đứng đầu candidate group (e.g. "As Mieko Mitsubishi,")
+        # Không skip nếu "as" xuất hiện ở giữa câu (e.g. "I work as As a developer")
+        if clean == "As" and (i == 0 or tokens_with_pos[i - 1][0][-1] in ".!?"):
             i += 1
             continue
 
@@ -237,6 +314,11 @@ def _extract_name_candidates(text: str) -> list[tuple[str, int, int]]:
             i += 1
             continue
 
+        # Skip label header words (e.g. "Information", "Details", "Profile")
+        if clean.lower().rstrip(":") in _LABEL_HEADER_WORDS:
+            i += 1
+            continue
+
         # Collect a candidate group
         group_tokens: list[str] = []
         group_start = pos
@@ -244,7 +326,7 @@ def _extract_name_candidates(text: str) -> list[tuple[str, int, int]]:
 
         while j < len(tokens_with_pos) and len(group_tokens) < 4:
             t, p = tokens_with_pos[j]
-            c = t.rstrip(".,;:!?\"'")
+            c = t.lstrip("(\"'").rstrip(".,;:!?\"')")
 
             if not (c and c[0].isupper()):
                 break
@@ -253,6 +335,12 @@ def _extract_name_candidates(text: str) -> list[tuple[str, int, int]]:
             if c.lower() in _NAME_STOPWORDS:
                 break
             if c.lower() in _TITLE_PREFIXES or c.lower() in _ADDR_ABBREVS:
+                break
+            # Dừng nếu token là label header word kết thúc bằng ":" (e.g. "Information:")
+            if c.lower().rstrip(":") in _LABEL_HEADER_WORDS:
+                break
+            # Dừng nếu token là job title (tránh "Mieko Mitsubishi Account Manager")
+            if group_tokens and c.lower() in _JOB_TITLE_STOPWORDS:
                 break
             if group_tokens and _VERB_SUFFIX_RE.fullmatch(c):
                 break
@@ -263,9 +351,12 @@ def _extract_name_candidates(text: str) -> list[tuple[str, int, int]]:
             j += 1
 
         # Need at least 2 tokens
+        # Loại nếu token cuối là suffix chỉ tổ chức/địa điểm (e.g. "Harvard University", "Intel Company")
         if len(group_tokens) >= 2:
-            candidate_text = " ".join(group_tokens)
-            candidates.append((candidate_text, group_start, group_start + len(candidate_text)))
+            last_token = group_tokens[-1].lower().rstrip(".,;:!?\"'")
+            if last_token not in _ORG_PLACE_SUFFIXES:
+                candidate_text = " ".join(group_tokens)
+                candidates.append((candidate_text, group_start, group_start + len(candidate_text)))
 
         i = j if j > i else i + 1
 
@@ -299,7 +390,7 @@ def _score_candidate(candidate: str, sentence: str, full_text: str) -> tuple[int
     # --- Definitive patterns (break immediately) ---
 
     # Strong triggers: "my name is X", "full name: X", "name: X"
-    for trigger in NAME_TRIGGERS:
+    for trigger in NAME_TRIGGERS + _LABEL_TRIGGERS:
         if trigger in sent_lower:
             idx   = sent_lower.find(trigger)
             after = sentence[idx + len(trigger):].strip().lstrip(":").strip()
@@ -331,6 +422,39 @@ def _score_candidate(candidate: str, sentence: str, full_text: str) -> tuple[int
     # "As [name]," at start of sentence
     if re.match(r"^\s*As\s+" + re.escape(candidate) + r"\s*,", sentence, re.IGNORECASE):
         score += 5
+
+    # Pattern "label: [name]" — candidate xuất hiện ngay sau dấu ":"
+    # Không cần biết label là gì, chỉ cần có dấu ":" trước candidate
+    colon_before = re.search(
+        r":\s*\n?\s*" + re.escape(candidate),
+        sentence, re.IGNORECASE,
+    )
+    if colon_before:
+        score += 5
+
+    # Appositive pattern: "[name], <job title/role>," — tên đứng trước chức danh trong dấu phẩy
+    # e.g. "Kazuo Sun, air traffic controller, ..."
+    if re.search(re.escape(candidate) + r"\s*,\s*\w+", sentence, re.IGNORECASE):
+        # Kiểm tra từ sau dấu phẩy có phải job title không
+        appos_m = re.search(
+            re.escape(candidate) + r"\s*,\s*(\w+(?:\s+\w+)?)",
+            sentence, re.IGNORECASE,
+        )
+        if appos_m:
+            appos_words = appos_m.group(1).lower().split()
+            if any(w in _JOB_HARDLIST or w in _JOB_TITLE_STOPWORDS for w in appos_words):
+                score += 3
+
+    # Signature pattern: candidate đứng trên dòng riêng, dòng tiếp theo là job title
+    # e.g. "Mieko Mitsubishi\nAccount Manager\n1309..."
+    sig_m = re.search(
+        re.escape(candidate) + r"\s*\n\s*(\w+(?:\s+\w+)?)",
+        full_text, re.IGNORECASE,
+    )
+    if sig_m:
+        next_line_words = sig_m.group(1).lower().split()
+        if any(w in _JOB_HARDLIST or w in _JOB_TITLE_STOPWORDS for w in next_line_words):
+            score += 4
 
     # Pronoun scoring — first-person beats third-person (no stacking)
     has_first = any(re.search(r"\b" + re.escape(p) + r"\b", sent_lower)
@@ -375,7 +499,7 @@ def detect_name(text: str) -> list[dict[str, Any]]:
     seen_spans: set[tuple[int, int]] = set()
 
     # --- Fast path: strong triggers ---
-    for trigger in NAME_TRIGGERS:
+    for trigger in NAME_TRIGGERS + _LABEL_TRIGGERS:
         search_start = 0
         while True:
             trigger_pos = lower.find(trigger, search_start)
