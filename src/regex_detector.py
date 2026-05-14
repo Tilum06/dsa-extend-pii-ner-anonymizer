@@ -28,12 +28,16 @@ URL_PATTERN = re.compile(
 #   +84 912 345 678  |  0912345678  |  0912 345 678  |  0912-345-678
 #   (091) 234 5678   |  +1 (415) 555-2671  |  415.555.2671
 PHONE_PATTERN = re.compile(
-    r"(?<![a-zA-Z0-9@/])"            # negative lookbehind: not part of email/URL/word
-    r"(?:\+\d{1,3}[\s.\-]?)?"        # optional country code  (+84 , +1-, etc.)
-    r"(?:\(?\d{2,5}\)?[\s.\-])?"     # optional area/city code with optional parens
-    r"\d{2,5}"                       # first digit group
-    r"(?:[\s.\-]\d{2,5}){0,4}"      # subsequent digit groups separated by space/dot/dash
-    r"(?![a-zA-Z0-9@])"             # negative lookahead: not followed by alphanumeric/@
+    r"(?<![a-zA-Z0-9@/])"
+    r"(?:"
+        r"\d{8,15}"                                  # continuous digits
+        r"|"
+        r"(?:\+\d{1,3}[\s.\-]?)?"
+        r"(?:\(?\d{2,5}\)?[\s.\-])?"
+        r"\d{2,5}"
+        r"(?:[\s.\-]\d{2,5}){0,4}"
+    r")"
+    r"(?![a-zA-Z0-9@])"
 )
 
 # Characters considered trailing punctuation that should be stripped from

@@ -4,25 +4,38 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PII Detection & Anonymization Demo</title>
+    <meta name="description" content="Phát hiện và ẩn danh thông tin cá nhân (PII) trong văn bản sử dụng NER rule-based.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
     <div class="container">
         <header>
+            <div class="header-icon">🛡️</div>
             <h1>PII Detection & Anonymization</h1>
-            <p class="subtitle">Phát hiện và ẩn danh thông tin cá nhân</p>
+            <p class="subtitle">Phát hiện và ẩn danh thông tin cá nhân bằng NER rule-based</p>
         </header>
 
         <main>
             <div class="input-section">
-                <label for="inputText">Nhập văn bản:</label>
+                <label for="inputText">
+                    <span class="label-icon">📝</span> Nhập văn bản:
+                </label>
                 <textarea 
                     id="inputText" 
-                    placeholder="Nhập đoạn văn bản chứa thông tin cá nhân..."
+                    placeholder="Nhập đoạn văn bản chứa thông tin cá nhân... (Ctrl+Enter để xử lý)"
                     rows="6"
                 ></textarea>
-                <button id="processBtn" onclick="processText()">Xử lý</button>
-                <button id="clearBtn" onclick="clearAll()">Xóa</button>
+                <div class="button-group">
+                    <button id="processBtn" onclick="processText()">
+                        <span class="btn-icon">⚡</span> Xử lý
+                    </button>
+                    <button id="clearBtn" onclick="clearAll()">
+                        <span class="btn-icon">🗑️</span> Xóa
+                    </button>
+                </div>
             </div>
 
             <div id="loadingSpinner" class="loading hidden">
@@ -30,14 +43,30 @@
                 <p>Đang xử lý...</p>
             </div>
 
+            <div id="errorSection" class="error-section hidden">
+                <div class="error-message">
+                    <span class="error-icon">⚠️</span>
+                    <p id="errorText"></p>
+                </div>
+            </div>
+
             <div id="resultSection" class="result-section hidden">
-                <div class="output-section">
-                    <h2>Văn bản đã được xử lý:</h2>
-                    <div id="anonymizedText" class="output-text"></div>
+                <!-- Highlighted tokens display -->
+                <div class="output-section highlighted-section">
+                    <h2><span class="section-icon">🎯</span> Văn bản đã đánh dấu:</h2>
+                    <div id="highlightedText" class="highlighted-text"></div>
+                    <div class="entity-legend" id="entityLegend"></div>
                 </div>
 
+                <!-- Anonymized text -->
+                <div class="output-section anonymized-section">
+                    <h2><span class="section-icon">🔒</span> Văn bản ẩn danh:</h2>
+                    <div id="anonymizedText" class="output-text mono-text"></div>
+                </div>
+
+                <!-- Entities table -->
                 <div class="entities-section">
-                    <h2>Các thực thể được phát hiện:</h2>
+                    <h2><span class="section-icon">📋</span> Các thực thể được phát hiện:</h2>
                     <div id="entitiesContainer" class="entities-container">
                         <table id="entitiesTable">
                             <thead>
@@ -54,18 +83,16 @@
                     </div>
                 </div>
 
-                <button id="copyBtn" onclick="copyToClipboard()">Sao chép văn bản xử lý</button>
-            </div>
-
-            <div id="errorSection" class="error-section hidden">
-                <div class="error-message">
-                    <p id="errorText"></p>
+                <div class="action-buttons">
+                    <button id="copyBtn" onclick="copyToClipboard()">
+                        <span class="btn-icon">📋</span> Sao chép văn bản xử lý
+                    </button>
                 </div>
             </div>
         </main>
 
         <footer>
-            <p>&copy; 2026 PII Detection System. All rights reserved.</p>
+            <p>&copy; 2026 PII Detection System &mdash; DSA Project</p>
         </footer>
     </div>
 

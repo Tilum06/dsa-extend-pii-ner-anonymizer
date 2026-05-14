@@ -8,7 +8,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from src.regex_detector import detect_by_regex
 from src.context_detector import detect_by_context
 from src.merger import merge_entities
-from src.anonymizer import anonymize_text
+from src.anonymizer import anonymize_text, build_token_entity_list
 
 app = Flask(__name__)
 
@@ -74,10 +74,17 @@ def detect_pii():
             for entity in merged_entities
         ]
         
+        # Build token-level entity mapping
+        token_entities = build_token_entity_list(text, merged_entities)
+
         return jsonify({
             'original_text': text,
             'anonymized_text': anonymized_text,
-            'entities': formatted_entities
+            'entities': formatted_entities,
+            'token_entities': [
+                {'token': token, 'label': label}
+                for token, label in token_entities
+            ],
         }), 200
         
     except Exception as e:
