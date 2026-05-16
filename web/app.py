@@ -5,7 +5,7 @@ from pathlib import Path
 # Add parent directory to path to allow importing src
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.regex_detector import detect_by_regex
+from src.regex_detector import detect_regex_entities
 from src.context_detector import detect_by_context
 from src.merger import merge_entities
 from src.anonymizer import anonymize_text, build_token_entity_list
@@ -52,7 +52,7 @@ def detect_pii():
             return jsonify({'error': 'Text is required'}), 400
         
         # Step 1: Regex detection
-        regex_entities = detect_by_regex(text)
+        regex_entities = detect_regex_entities(text)
         
         # Step 2: Context detection
         context_entities = detect_by_context(text)
