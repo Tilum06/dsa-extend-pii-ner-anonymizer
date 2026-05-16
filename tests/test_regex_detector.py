@@ -5,7 +5,7 @@ from src.regex_detector import (
     detect_email,
     detect_phone,
     detect_url,
-    detect_by_regex,
+    detect_regex_entities,
 )
 
 
@@ -85,6 +85,13 @@ class TestDetectPhone:
         
         assert isinstance(result, list)
 
+    def test_detect_phone_four_digit_prefix_long_local(self):
+        """Test detecting phone with 4-digit prefix and 7-digit local part."""
+        text = "0475 4429797"
+        result = detect_phone(text)
+
+        assert result == [{"type": "PHONE", "text": text, "start": 0, "end": 12}]
+
     def test_detect_phone_no_phone(self):
         """Test when no phone present."""
         text = "No phone here"
@@ -145,36 +152,36 @@ class TestDetectUrl:
         assert all(e["type"] == "URL" for e in result)
 
 
-class TestDetectByRegex:
-    """Test cases for detect_by_regex function."""
+class TestDetectRegexEntities:
+    """Test cases for detect_regex_entities function."""
 
-    def test_detect_by_regex_email(self):
+    def test_detect_regex_entities_email(self):
         """Test regex detection includes emails."""
         text = "john@example.com"
-        result = detect_by_regex(text)
+        result = detect_regex_entities(text)
         
         assert isinstance(result, list)
 
-    def test_detect_by_regex_multiple_types(self):
+    def test_detect_regex_entities_multiple_types(self):
         """Test regex detection with multiple entity types."""
         text = "Email: john@example.com Phone: 555-1234 Website: www.example.com"
-        result = detect_by_regex(text)
+        result = detect_regex_entities(text)
         
         assert isinstance(result, list)
         types = {e["type"] for e in result}
         assert len(types) >= 1
 
-    def test_detect_by_regex_empty_text(self):
+    def test_detect_regex_entities_empty_text(self):
         """Test regex detection with empty text."""
         text = ""
-        result = detect_by_regex(text)
+        result = detect_regex_entities(text)
         
         assert isinstance(result, list)
 
-    def test_detect_by_regex_entity_format(self):
+    def test_detect_regex_entities_entity_format(self):
         """Test all entities have correct format."""
         text = "john@example.com 555-1234 www.example.com"
-        result = detect_by_regex(text)
+        result = detect_regex_entities(text)
         
         for entity in result:
             assert "type" in entity

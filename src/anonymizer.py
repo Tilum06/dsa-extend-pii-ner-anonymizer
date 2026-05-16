@@ -107,8 +107,7 @@ def anonymize_text(text: str, entities: list[dict[str, Any]] | dict[str, str]) -
         The original input text.
     entities:
         Either a list of entity dicts (with ``type``, ``start``, ``end``)
-        **or** a pre-built ``{token: entity_type}`` dictionary (for
-        backward compatibility with existing callers like ``main.py``).
+        **or** a pre-built ``{token: entity_type}`` dictionary.
 
     Returns
     -------

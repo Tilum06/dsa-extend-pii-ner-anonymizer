@@ -54,6 +54,63 @@ class TestDetectName:
                 assert isinstance(entity["end"], int)
                 assert entity["start"] >= 0
 
+    def test_detect_name_scoring_path_first_person(self):
+        """Test detecting name through sentence-level scoring."""
+        text = "I am Alice Smith."
+        result = detect_name(text)
+
+        assert result == [
+            {"type": "NAME", "text": "Alice Smith", "start": 5, "end": 16}
+        ]
+
+    def test_detect_name_scoring_path_single_token(self):
+        """Test detecting a one-token name through sentence-level scoring."""
+        text = "I am Alice."
+        result = detect_name(text)
+
+        assert result == [{"type": "NAME", "text": "Alice", "start": 5, "end": 10}]
+
+    def test_detect_name_single_token_with_narrow_context(self):
+        """Test detecting a one-token name with weak surrounding context."""
+        text = "Alice went home."
+        result = detect_name(text)
+
+        assert result == [{"type": "NAME", "text": "Alice", "start": 0, "end": 5}]
+
+    def test_detect_name_keeps_scanning_after_trigger(self):
+        """Test fast-path triggers do not prevent later NAME detections."""
+        text = "My name is Bob. Alice went home."
+        result = detect_name(text)
+
+        assert result == [
+            {"type": "NAME", "text": "Bob", "start": 11, "end": 14},
+            {"type": "NAME", "text": "Alice", "start": 16, "end": 21},
+        ]
+
+    def test_detect_name_ignores_inline_bio_suffix_artifacts(self):
+        """Test NAME extraction ignores BIO labels glued to raw tokens."""
+        text = "P.S.:B-NAME WhenI-NAME"
+        result = detect_name(text)
+
+        assert result == []
+
+    def test_detect_name_scoring_path_title_prefix(self):
+        """Test candidate extraction strips title prefixes."""
+        text = "Dr. Alice Smith met Bob Jones."
+        result = detect_name(text)
+
+        assert result == [
+            {"type": "NAME", "text": "Alice Smith", "start": 4, "end": 15},
+            {"type": "NAME", "text": "Bob Jones", "start": 20, "end": 29},
+        ]
+
+    def test_detect_name_scoring_path_skips_address_like_candidate(self):
+        """Test candidate extraction does not treat address words as names."""
+        text = "123 Main Street is busy."
+        result = detect_name(text)
+
+        assert result == []
+
 
 class TestDetectUsername:
     """Test cases for detect_username function."""
@@ -175,11 +232,12 @@ class TestDetectByContext:
         """Test context detection with multiple entities."""
         text = "My name is Bob and username: bob_smith at street: Main Street"
         result = detect_by_context(text)
-        
-        assert isinstance(result, list)
-        if result:
-            types = {e["type"] for e in result}
-            assert all(t in ["NAME", "USERNAME", "ADDRESS"] for t in types)
+
+        assert result == [
+            {"type": "NAME", "text": "Bob", "start": 11, "end": 14},
+            {"type": "USERNAME", "text": "bob_smith", "start": 29, "end": 38},
+            {"type": "ADDRESS", "text": "Main Street", "start": 50, "end": 61},
+        ]
 
     def test_detect_by_context_empty_text(self):
         """Test context detection with empty text."""
@@ -205,5 +263,17 @@ class TestDetectByContext:
         """Test context detection with no triggers."""
         text = "Just plain text without any triggers"
         result = detect_by_context(text)
-        
+
         assert isinstance(result, list)
+
+    def test_detect_by_context_respects_excluded_entities(self):
+        """Test context resolver removes spans overlapping excluded entities."""
+        text = "Email: alice@example.com Name: Alice"
+        result = detect_by_context(
+            text,
+            excluded_entities=[
+                {"type": "EMAIL", "text": "alice@example.com", "start": 7, "end": 24}
+            ],
+        )
+
+        assert result == [{"type": "NAME", "text": "Alice", "start": 31, "end": 36}]

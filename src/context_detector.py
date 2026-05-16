@@ -3,8 +3,42 @@
 from __future__ import annotations
 
 import re
-from typing import Any
-import src.tokenizer as tokenizer
+from typing import Any, TypedDict
+
+
+class Entity(TypedDict):
+    """Public entity shape returned by context detectors."""
+
+    type: str
+    text: str
+    start: int
+    end: int
+
+
+class Sentence(TypedDict):
+    """Sentence span in the original input text."""
+
+    sentence: str
+    start: int
+    end: int
+
+
+class Candidate(TypedDict):
+    """Internal candidate span before final resolution."""
+
+    text: str
+    start: int
+    end: int
+
+
+class DetectorContext(TypedDict):
+    """Shared preprocessing context used by all context detectors."""
+
+    text: str
+    lower: str
+    sentences: list[Sentence]
+    email_spans: list[tuple[int, int]]
+
 
 # ---------------------------------------------------------------------------
 # Constants & Triggers
@@ -77,6 +111,9 @@ _NO_SPLIT_ABBREVS = (
         "approx.",
         "dept.",
         "est.",
+        "p.m.",
+        "a.m.",
+        "p.s.",
     }
 )
 
@@ -348,6 +385,9 @@ _NAME_STOPWORDS = {
     "the",
     "a",
     "an",
+    "no",
+    "not",
+    "just",
     "in",
     "at",
     "on",
@@ -439,6 +479,148 @@ _NAME_STOPWORDS = {
     "called",
     "calls",
     "call",
+    "contact",
+    "email",
+    "address",
+    "phone",
+    "number",
+    "username",
+    "user",
+    "names",
+    "name",
+    "here",
+    "plain",
+    "text",
+    "without",
+    "triggers",
+    "street",
+    "road",
+    "avenue",
+    "boulevard",
+    "drive",
+    "lane",
+    "court",
+    "place",
+    "terrace",
+    "suite",
+    "apartment",
+    "apt",
+    "unit",
+}
+
+_POSSIBLE_SENTENCE_STARTERS = {
+    "this",
+    "then",
+    "using",
+    "each",
+    "once",
+    "given",
+    "considering",
+    "after",
+    "before",
+    "when",
+    "while",
+    "although",
+    "though",
+    "if",
+    "unless",
+    "since",
+    "because",
+    "as",
+    "even though",
+    "in case",
+    "provided that",
+    "fortunately",
+    "if",
+    "whenever",
+    "whereas",
+    "despite",
+    "in spite of",
+    "regardless of",
+    "assuming that",
+    "suppose",
+    "supposing that",
+    "let's say",
+    "say that",
+    "imagine that",
+    "what if",
+    "hypothetically",
+    "for example",
+    "for instance",
+    "e.g.",
+    "i.e.",
+    "to illustrate",
+    "in other words",
+    "that is",
+    "namely",
+    "specifically",
+    "such as",
+    "like",
+    "including",
+    "particularly",
+    "notably",
+    "especially",
+    "as an example",
+    "as a case in point",
+    "to put it another way",
+    "in particular",
+    "on the other hand",
+    "alternatively",
+    "in contrast",
+    "conversely",
+    "similarly",
+    "likewise",
+    "correspondingly",
+    "comparatively",
+    "by comparison",
+    "in comparison",
+    "at the same time",
+    "meanwhile",
+    "subsequently",
+    "afterward",
+    "thereafter",
+    "eventually",
+    "ultimately",
+    "finally",
+    "in conclusion",
+    "to sum up",
+    "in summary",
+    "overall",
+    "all in all",
+    "in brief",
+    "in short",
+    "to summarize",
+    "to conclude",
+    "in essence",
+    "in a nutshell",
+    "in a word",
+    "to put it simply",
+    "simply put",
+    "put simply",
+    "frankly",
+    "honestly",
+    "truthfully",
+    "candidly",
+    "to be honest",
+    "to be frank",
+    "to tell the truth",
+    "in my opinion",
+    "personally",
+    "from my perspective",
+    "as far as I'm concerned",
+    "if you ask me",
+    "my take is",
+    "the way I see it",
+    "what I think is",
+    "the point is",
+    "the fact is",
+    "the reality is",
+    "the bottom line is",
+    "unfortunately",
+    "throughout",
+    "quilting",
+    "additionally",
+    "one",
 }
 
 # Verb suffix — only triggered after >= 1 name token already collected
@@ -540,6 +722,7 @@ _ADDRESS_RE = re.compile(
 )
 
 _EMAIL_RE = re.compile(r"[A-Za-z0-9_.+-]+@[A-Za-z0-9-]+\.[A-Za-z0-9-.]+")
+_INLINE_NAME_BIO_SUFFIX_RE = re.compile(r":?[BI]-(?:NAME|NAME_STUDENT)$")
 
 
 # ---------------------------------------------------------------------------
@@ -547,7 +730,7 @@ _EMAIL_RE = re.compile(r"[A-Za-z0-9_.+-]+@[A-Za-z0-9-]+\.[A-Za-z0-9-.]+")
 # ---------------------------------------------------------------------------
 
 
-def _split_sentences(text: str) -> list[tuple[str, int]]:
+def _split_sentences(text: str) -> list[Sentence]:
     """Split text into (sentence, start_offset) pairs.
 
     A '.' ends a sentence only when:
@@ -555,7 +738,7 @@ def _split_sentences(text: str) -> list[tuple[str, int]]:
       - The token ending with '.' is NOT a known abbreviation
       - The text after '.' is NOT a TLD (to avoid splitting emails/URLs)
     """
-    sentences: list[tuple[str, int]] = []
+    sentences: list[Sentence] = []
     current_start = 0
     i = 0
 
@@ -591,9 +774,18 @@ def _split_sentences(text: str) -> list[tuple[str, int]]:
                     continue
 
             # Sentence boundary confirmed
-            sentence = text[current_start : i + 1].strip()
+            raw_sentence = text[current_start : i + 1]
+            leading = len(raw_sentence) - len(raw_sentence.lstrip())
+            sentence_start = current_start + leading
+            sentence = raw_sentence.strip()
             if sentence:
-                sentences.append((sentence, current_start))
+                sentences.append(
+                    {
+                        "sentence": sentence,
+                        "start": sentence_start,
+                        "end": sentence_start + len(sentence),
+                    }
+                )
             current_start = i + 1
             while current_start < len(text) and text[current_start].isspace():
                 current_start += 1
@@ -601,11 +793,33 @@ def _split_sentences(text: str) -> list[tuple[str, int]]:
         else:
             i += 1
 
-    remainder = text[current_start:].strip()
+    raw_remainder = text[current_start:]
+    leading = len(raw_remainder) - len(raw_remainder.lstrip())
+    remainder_start = current_start + leading
+    remainder = raw_remainder.strip()
     if remainder:
-        sentences.append((remainder, current_start))
+        sentences.append(
+            {
+                "sentence": remainder,
+                "start": remainder_start,
+                "end": remainder_start + len(remainder),
+            }
+        )
 
     return sentences
+
+
+def _build_context(text: str) -> DetectorContext:
+    """Preprocess raw text once for all context detectors."""
+    if text is None:
+        text = ""
+    text = str(text)
+    return {
+        "text": text,
+        "lower": text.lower(),
+        "sentences": _split_sentences(text),
+        "email_spans": [(m.start(), m.end()) for m in _EMAIL_RE.finditer(text)],
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -613,33 +827,53 @@ def _split_sentences(text: str) -> list[tuple[str, int]]:
 # ---------------------------------------------------------------------------
 
 
-def _extract_name_candidates(
-    sentence: tuple[str, int],
-) -> list[tuple[str, int, int]]:
-    """Scan sentences for consecutive title-cased token groups (2–4 tokens).
+def _clean_name_token(raw: str) -> tuple[str, int, int]:
+    """Return cleaned token text and raw-relative span for NAME extraction."""
+    leading = len(raw) - len(raw.lstrip(".,;:!?\"'"))
+    body = raw[leading:].rstrip(".,;:!?\"'")
+    match = _INLINE_NAME_BIO_SUFFIX_RE.search(body)
+    if match:
+        return "", leading, leading + len(body)
+    return body, leading, leading + len(body)
+
+
+def _has_inline_name_bio_suffix(raw: str) -> bool:
+    """Return True when a token contains an inline BIO NAME label artifact."""
+    body = raw.lstrip(".,;:!?\"'").rstrip(".,;:!?\"'")
+    return _INLINE_NAME_BIO_SUFFIX_RE.search(body) is not None
+
+
+def _extract_name_candidates(sentence: Sentence) -> list[Candidate]:
+    """Scan sentences for consecutive title-cased token groups (1–4 tokens).
 
     Rules:
     - Strip leading title prefixes (Dr., Mr., etc.) and "As"
     - Discard tokens with special characters
     - Discard groups where previous token was a pure number (→ likely address)
     - Discard groups starting with a digit
-    - Minimum 2 tokens to be a valid candidate
+    - Minimum 1 token to be a valid candidate
     """
-    candidates: list[tuple[str, int, int]] = []
+    candidates: list[Candidate] = []
 
-    sentence_text, sent_offset = sentence[0], sentence[1]
-    tokens = re.findall(r"\S+", sentence_text)
+    sentence_text, sent_offset = sentence["sentence"], sentence["start"]
+    token_matches = list(re.finditer(r"\S+", sentence_text))
     i = 0
-    while i < len(tokens):
-        token = tokens[i]
-        clean_token = token.strip(",;:!?\"'")
+    while i < len(token_matches):
+        token_match = token_matches[i]
+        token = token_match.group()
+        if _has_inline_name_bio_suffix(token):
+            i += 1
+            continue
+        clean_token, _, _ = _clean_name_token(token)
 
         # Check for title prefix
         if clean_token.lower() in _TITLE_PREFIXES or (
-            clean_token.lower() == "as" and i + 1 < len(tokens)
+            clean_token.lower() == "as" and i + 1 < len(token_matches)
         ):
             i += 1
             continue
+
+        prev_clean = _clean_name_token(token_matches[i - 1].group())[0] if i > 0 else ""
 
         # Check if token is a valid name token
         if (
@@ -647,34 +881,68 @@ def _extract_name_candidates(
             and clean_token[0].isupper()
             and not any(c.isdigit() for c in clean_token)
             and not _SPECIAL_CHARS_RE.search(clean_token)
+            and not prev_clean.isdigit()
         ):
-            start_idx = sentence_text.find(token, sent_offset)
-            end_idx = start_idx + len(token)
+            if (
+                clean_token.lower()
+                in _NAME_STOPWORDS
+                | _FIRST_PERSON
+                | _THIRD_PERSON
+                | _POSSIBLE_SENTENCE_STARTERS
+            ):
+                i += 1
+                continue
+            # Potential name token found, collect consecutive title-cased tokens
+            start_idx = i
+            name_tokens: list[str] = []
+            name_start: int | None = None
+            name_end: int | None = None
 
-            # Collect consecutive title-cased tokens (up to 4)
-            name_tokens = [clean_token]
-            j = i + 1
-            while j < len(tokens) and len(name_tokens) < 4:
-                next_token = tokens[j]
-                clean_next = next_token.strip(",;:!?\"'")
-                if (
-                    clean_next
-                    and clean_next[0].isupper()
-                    and not any(c.isdigit() for c in clean_next)
-                    and not _SPECIAL_CHARS_RE.search(clean_next)
+            while i < len(token_matches) and len(name_tokens) < 4:
+                current_match = token_matches[i]
+                raw = current_match.group()
+                if _has_inline_name_bio_suffix(raw):
+                    break
+                clean, clean_start, clean_end = _clean_name_token(raw)
+                lower_clean = clean.lower()
+
+                if not (
+                    clean
+                    and clean[0].isupper()
+                    and not any(c.isdigit() for c in clean)
+                    and not _SPECIAL_CHARS_RE.search(clean)
                 ):
-                    name_tokens.append(clean_next)
-                    end_idx = sentence_text.find(next_token, sent_offset) + len(
-                        next_token
-                    )
-                    j += 1
-                else:
+                    break
+                if lower_clean in (
+                    _NAME_STOPWORDS
+                    | _FIRST_PERSON
+                    | _THIRD_PERSON
+                    | _JOB_TITLE_STOPWORDS
+                    | _LABEL_HEADER_WORDS
+                ):
                     break
 
-            if len(name_tokens) >= 2:
-                candidates.append((" ".join(name_tokens), start_idx, end_idx))
-                i = j
-            else:
+                if name_start is None:
+                    name_start = sent_offset + current_match.start() + clean_start
+                name_end = sent_offset + current_match.start() + clean_end
+                name_tokens.append(clean)
+                i += 1
+
+            if (
+                len(name_tokens) >= 1
+                and name_start is not None
+                and name_end is not None
+                and name_tokens[-1].lower() not in _ORG_PLACE_SUFFIXES
+            ):
+                candidates.append(
+                    {
+                        "text": " ".join(name_tokens),
+                        "start": name_start,
+                        "end": name_end,
+                    }
+                )
+
+            if i == start_idx:
                 i += 1
         else:
             i += 1
@@ -695,126 +963,73 @@ def _has_job_in_sentence(sentence: str) -> bool:
     return False
 
 
-def _score_candidate(candidate: str, sentence: str, full_text: str) -> tuple[int, bool]:
+def _score_candidate(name: str, sentence: Sentence) -> tuple[int, bool]:
     """Score a name candidate in its sentence context.
 
     Returns (score, is_definitive).
     is_definitive=True → caller should break and return this candidate immediately.
     """
     score = 0
-    sent_lower = sentence.lower()
-    cand_lower = candidate.lower()
-    cand_parts = cand_lower.split()
+    sentence_text = sentence["sentence"]
+    sent_lower = sentence_text.lower()
+    name_lower = name.lower()
 
-    # --- Definitive patterns (break immediately) ---
-
-    # Strong triggers: "my name is X", "full name: X", "name: X"
-    for trigger in NAME_TRIGGERS or _LABEL_TRIGGERS:
+    for trigger in NAME_TRIGGERS | _LABEL_TRIGGERS:
         if trigger in sent_lower:
             idx = sent_lower.find(trigger)
-            after = sentence[idx + len(trigger) :].strip().lstrip(":").strip()
-            if after.lower().startswith(cand_lower):
+            after = sentence_text[idx + len(trigger) :].strip().lstrip(":").strip()
+            if after.lower().startswith(name_lower):
                 return 100, True
 
-    # "I, [name]" or "[name], I"
-    if re.search(r"\bI\s*,\s*" + re.escape(candidate), sentence, re.IGNORECASE):
+    if re.search(r"\bI\s*,\s*" + re.escape(name), sentence_text, re.IGNORECASE):
         return 100, True
-    if re.search(re.escape(candidate) + r"\s*,\s*I\b", sentence, re.IGNORECASE):
+    if re.search(re.escape(name) + r"\s*,\s*I\b", sentence_text, re.IGNORECASE):
         return 100, True
-
-    # "I'm [name]" / "I am [name]"
-    if re.search(r"\bI'?m\s+" + re.escape(candidate), sentence, re.IGNORECASE):
+    if re.search(r"\bI'?m\s+" + re.escape(name), sentence_text, re.IGNORECASE):
         return 100, True
-    if re.search(r"\bI\s+am\s+" + re.escape(candidate), sentence, re.IGNORECASE):
+    if re.search(r"\bI\s+am\s+" + re.escape(name), sentence_text, re.IGNORECASE):
         return 100, True
-
-    # "I was named [name]"
     if re.search(
-        r"\bI\s+was\s+named\s+" + re.escape(candidate), sentence, re.IGNORECASE
+        r"\bI\s+was\s+named\s+" + re.escape(name), sentence_text, re.IGNORECASE
     ):
         return 100, True
 
-    # --- Non-definitive scoring ---
-
-    # "my name" in sentence
     if "my name" in sent_lower:
         score += 10
 
-    # "As [name]," at start of sentence
-    if re.match(r"^\s*As\s+" + re.escape(candidate) + r"\s*,", sentence, re.IGNORECASE):
+    if re.match(r"^\s*As\s+" + re.escape(name) + r"\s*,", sentence_text, re.IGNORECASE):
         score += 5
 
-    # Pattern "label: [name]" — candidate xuất hiện ngay sau dấu ":"
-    # Không cần biết label là gì, chỉ cần có dấu ":" trước candidate
-    colon_before = re.search(
-        r":\s*\n?\s*" + re.escape(candidate),
-        sentence,
-        re.IGNORECASE,
-    )
-    if colon_before:
+    if re.search(r":\s*\n?\s*" + re.escape(name), sentence_text, re.IGNORECASE):
         score += 5
 
-    # Appositive pattern: "[name], <job title/role>," — tên đứng trước chức danh trong dấu phẩy
-    # e.g. "Kazuo Sun, air traffic controller, ..."
-    if re.search(re.escape(candidate) + r"\s*,\s*\w+", sentence, re.IGNORECASE):
-        # Kiểm tra từ sau dấu phẩy có phải job title không
-        appos_m = re.search(
-            re.escape(candidate) + r"\s*,\s*(\w+(?:\s+\w+)?)",
-            sentence,
-            re.IGNORECASE,
-        )
-        if appos_m:
-            appos_words = appos_m.group(1).lower().split()
-            if any(
-                w in _JOB_HARDLIST or w in _JOB_TITLE_STOPWORDS for w in appos_words
-            ):
-                score += 3
-
-    # Signature pattern: candidate đứng trên dòng riêng, dòng tiếp theo là job title
-    # e.g. "Mieko Mitsubishi\nAccount Manager\n1309..."
-    sig_m = re.search(
-        re.escape(candidate) + r"\s*\n\s*(\w+(?:\s+\w+)?)",
-        full_text,
+    appos_m = re.search(
+        re.escape(name) + r"\s*,\s*(\w+(?:\s+\w+)?)",
+        sentence_text,
         re.IGNORECASE,
     )
-    if sig_m:
-        next_line_words = sig_m.group(1).lower().split()
-        if any(
-            w in _JOB_HARDLIST or w in _JOB_TITLE_STOPWORDS for w in next_line_words
-        ):
-            score += 4
+    if appos_m:
+        appos_words = appos_m.group(1).lower().split()
+        if any(w in _JOB_HARDLIST or w in _JOB_TITLE_STOPWORDS for w in appos_words):
+            score += 3
 
-    # Pronoun scoring — first-person beats third-person (no stacking)
     has_first = any(
         re.search(r"\b" + re.escape(p) + r"\b", sent_lower) for p in _FIRST_PERSON
     )
     has_third = any(
         re.search(r"\b" + re.escape(p) + r"\b", sent_lower) for p in _THIRD_PERSON
     )
-
     if has_first:
         score += 2
     elif has_third:
         score += 1
 
-    # Job/occupation in the same sentence
-    if _has_job_in_sentence(sentence):
+    if _has_job_in_sentence(sentence_text):
         score += 2
 
-    # Repetition in full text (partial match: each part of name counted)
-    repeat_count = 0
-    for part in cand_parts:
-        repeat_count += len(
-            re.findall(r"\b" + re.escape(part) + r"\b", full_text, re.IGNORECASE)
-        )
-    repeat_count -= len(cand_parts)  # subtract the candidate itself
-    if repeat_count > 0:
-        score += min(repeat_count, 5)  # cap at +5
-
-    # Title prefix present before candidate anywhere in full text
     if re.search(
-        r"\b(?:Dr|Mr|Mrs|Ms|Prof)\.?\s+" + re.escape(candidate),
-        full_text,
+        r"\b(?:Dr|Mr|Mrs|Ms|Prof)\.?\s+" + re.escape(name),
+        sentence_text,
         re.IGNORECASE,
     ):
         score += 1
@@ -827,14 +1042,75 @@ def _score_candidate(candidate: str, sentence: str, full_text: str) -> tuple[int
 # ---------------------------------------------------------------------------
 
 
-def detect_name(text: str) -> list[dict[str, Any]]:
-    """Detect NAME spans using trigger rules + scoring algorithm."""
+def _make_entity(entity_type: str, text: str, start: int, end: int) -> Entity:
+    return {"type": entity_type, "text": text, "start": start, "end": end}
+
+
+def _entity_span(entity: dict[str, Any]) -> tuple[int, int]:
+    return entity["start"], entity["end"]
+
+
+def _overlaps(start: int, end: int, other_start: int, other_end: int) -> bool:
+    return start < other_end and end > other_start
+
+
+def _overlaps_any_entity(entity: dict[str, Any], others: list[dict[str, Any]]) -> bool:
+    start, end = _entity_span(entity)
+    return any(_overlaps(start, end, other["start"], other["end"]) for other in others)
+
+
+def _public_entity(entity: dict[str, Any]) -> Entity:
+    return {
+        "type": entity["type"],
+        "text": entity["text"],
+        "start": entity["start"],
+        "end": entity["end"],
+    }
+
+
+def _resolve_entities(
+    entities: list[dict[str, Any]],
+    excluded_entities: list[dict[str, Any]] | None = None,
+) -> list[Entity]:
+    """Resolve duplicates and overlaps across detector outputs."""
+    excluded = excluded_entities or []
+    priority = {"ADDRESS": 0, "USERNAME": 1, "NAME": 2}
+    sorted_entities = sorted(
+        entities,
+        key=lambda e: (
+            priority.get(e["type"], 99),
+            -int(e.get("_score", 0)),
+            e["start"],
+            -(e["end"] - e["start"]),
+        ),
+    )
+
+    kept: list[dict[str, Any]] = []
+    seen: set[tuple[str, int, int]] = set()
+    for entity in sorted_entities:
+        key = (entity["type"], entity["start"], entity["end"])
+        if key in seen:
+            continue
+        if _overlaps_any_entity(entity, excluded):
+            continue
+        if _overlaps_any_entity(entity, kept):
+            continue
+        seen.add(key)
+        kept.append(entity)
+
+    kept.sort(key=lambda e: (e["start"], e["end"]))
+    return [_public_entity(entity) for entity in kept]
+
+
+def _detect_name_context(ctx: DetectorContext) -> list[dict[str, Any]]:
+    """Detect NAME spans using shared detector context."""
+    text = ctx["text"]
+    lower = ctx["lower"]
     entities: list[dict[str, Any]] = []
-    lower = text.lower()
     seen_spans: set[tuple[int, int]] = set()
 
     # --- Fast path: strong triggers ---
-    for trigger in NAME_TRIGGERS or _LABEL_TRIGGERS:
+    for trigger in NAME_TRIGGERS | _LABEL_TRIGGERS:
         search_start = 0
         while True:
             trigger_pos = lower.find(trigger, search_start)
@@ -864,6 +1140,8 @@ def detect_name(text: str) -> list[dict[str, Any]]:
                 if name_start is None:
                     name_start = after + m.start()
                 name_tokens.append(clean)
+                if token.endswith((".", "!", "?")):
+                    break
                 if len(name_tokens) == 4:
                     break
 
@@ -872,82 +1150,39 @@ def detect_name(text: str) -> list[dict[str, Any]]:
                 span = (name_start, name_start + len(name_text))
                 if span not in seen_spans:
                     seen_spans.add(span)
-                    entities.append(
-                        {
-                            "type": "NAME",
-                            "text": name_text,
-                            "start": span[0],
-                            "end": span[1],
-                        }
-                    )
+                    entity = _make_entity("NAME", name_text, span[0], span[1])
+                    entity["_score"] = 100
+                    entities.append(entity)
             search_start = trigger_pos + len(trigger)
 
-    if entities:
-        return entities
-
     # --- Scoring path ---
-    sentences = _split_sentences(text)
-    candidates = _extract_name_candidates(text)
-
-    if not candidates:
-        return []
-
-    # best_scores: candidate_text -> (score, start, end)
-    best_scores: dict[str, tuple[int, int, int]] = {}
-
-    for cand_text, cand_start, cand_end in candidates:
-        best_score = 0
-
-        for sent, _ in sentences:
-            # Check if any part of the candidate appears in the sentence
-            parts = cand_text.lower().split()
-            if not any(p in sent.lower() for p in parts):
-                continue
-
-            s, definitive = _score_candidate(cand_text, sent, text)
+    for sent in ctx["sentences"]:
+        for cand in _extract_name_candidates(sent):
+            cand_text = cand["text"]
+            cand_start = cand["start"]
+            cand_end = cand["end"]
+            score, definitive = _score_candidate(cand_text, sent)
+            entity = _make_entity("NAME", cand_text, cand_start, cand_end)
+            entity["_score"] = 100 if definitive else score
 
             if definitive:
-                entities.append(
-                    {
-                        "type": "NAME",
-                        "text": cand_text,
-                        "start": cand_start,
-                        "end": cand_end,
-                    }
-                )
-                return entities
+                entities.insert(0, entity)
+            else:
+                entities.append(entity)
 
-            best_score = max(best_score, s)
-
-        existing = best_scores.get(cand_text)
-        if existing is None or best_score > existing[0]:
-            best_scores[cand_text] = (best_score, cand_start, cand_end)
-
-    if not best_scores:
-        return []
-
-    # Pick winner: highest score; tie → earliest position
-    winner_text = max(
-        best_scores,
-        key=lambda t: (best_scores[t][0], -best_scores[t][1]),
-    )
-    _, winner_start, winner_end = best_scores[winner_text]
-
-    entities.append(
-        {
-            "type": "NAME",
-            "text": winner_text,
-            "start": winner_start,
-            "end": winner_end,
-        }
-    )
     return entities
 
 
-def detect_username(text: str) -> list[dict[str, Any]]:
-    """Detect USERNAME spans using context rules."""
+def detect_name(text: str) -> list[Entity]:
+    """Detect NAME spans from raw text."""
+    return _resolve_entities(_detect_name_context(_build_context(text)))
+
+
+def _detect_username_context(ctx: DetectorContext) -> list[dict[str, Any]]:
+    """Detect USERNAME spans using shared detector context."""
+    text = ctx["text"]
+    lower = ctx["lower"]
     entities: list[dict[str, Any]] = []
-    lower = text.lower()
 
     for trigger in USERNAME_TRIGGERS:
         search_start = 0
@@ -995,26 +1230,26 @@ def detect_username(text: str) -> list[dict[str, Any]]:
             if m:
                 token = m.group().rstrip(".,;:!?")
                 if _USERNAME_RE.fullmatch(token):
-                    entities.append(
-                        {
-                            "type": "USERNAME",
-                            "text": token,
-                            "start": after,
-                            "end": after + len(token),
-                        }
-                    )
+                    entity = _make_entity("USERNAME", token, after, after + len(token))
+                    entity["_score"] = 10
+                    entities.append(entity)
 
             search_start = trigger_pos + len(trigger)
 
     return entities
 
 
-def detect_address(text: str) -> list[dict[str, Any]]:
-    """Detect ADDRESS spans using regex pattern + trigger-keyword fallback."""
-    entities: list[dict[str, Any]] = []
+def detect_username(text: str) -> list[Entity]:
+    """Detect USERNAME spans from raw text."""
+    return _resolve_entities(_detect_username_context(_build_context(text)))
 
-    # Pre-compute email spans to exclude
-    email_spans = [(m.start(), m.end()) for m in _EMAIL_RE.finditer(text)]
+
+def _detect_address_context(ctx: DetectorContext) -> list[dict[str, Any]]:
+    """Detect ADDRESS spans using shared detector context."""
+    text = ctx["text"]
+    lower = ctx["lower"]
+    entities: list[dict[str, Any]] = []
+    email_spans = ctx["email_spans"]
 
     def _in_email(start: int, end: int) -> bool:
         return any(es <= start and end <= ee for es, ee in email_spans)
@@ -1024,17 +1259,13 @@ def detect_address(text: str) -> list[dict[str, Any]]:
         if _in_email(m.start(), m.end()):
             continue
         addr_text = m.group().strip()
-        entities.append(
-            {
-                "type": "ADDRESS",
-                "text": addr_text,
-                "start": m.start(),
-                "end": m.start() + len(addr_text),
-            }
+        entity = _make_entity(
+            "ADDRESS", addr_text, m.start(), m.start() + len(addr_text)
         )
+        entity["_score"] = 20
+        entities.append(entity)
 
     # --- Fallback: trigger keywords for addresses without street type ---
-    lower = text.lower()
     for trigger in ADDRESS_TRIGGERS:
         search_start = 0
         while True:
@@ -1047,7 +1278,16 @@ def detect_address(text: str) -> list[dict[str, Any]]:
                 search_start = trigger_pos + 1
                 continue
 
-            clause_start = _find_clause_start(text, trigger_pos)
+            value_start = end_of_trigger
+            while value_start < len(text) and text[value_start] in " \t":
+                value_start += 1
+            if value_start < len(text) and text[value_start] == ":":
+                value_start += 1
+                clause_start = value_start
+            elif lower[value_start : value_start + 3] == "is ":
+                clause_start = value_start + 3
+            else:
+                clause_start = _find_clause_start(text, trigger_pos)
             clause_end = _find_clause_end(text, end_of_trigger)
             addr_text, actual_start = _strip_leading_noise(
                 text, clause_start, clause_end
@@ -1066,18 +1306,23 @@ def detect_address(text: str) -> list[dict[str, Any]]:
                     for e in entities
                 )
                 if not overlap:
-                    entities.append(
-                        {
-                            "type": "ADDRESS",
-                            "text": addr_text,
-                            "start": actual_start,
-                            "end": actual_start + len(addr_text),
-                        }
+                    entity = _make_entity(
+                        "ADDRESS",
+                        addr_text,
+                        actual_start,
+                        actual_start + len(addr_text),
                     )
+                    entity["_score"] = 5
+                    entities.append(entity)
 
             search_start = trigger_pos + len(trigger)
 
-    return _deduplicate(entities)
+    return entities
+
+
+def detect_address(text: str) -> list[Entity]:
+    """Detect ADDRESS spans from raw text."""
+    return _resolve_entities(_detect_address_context(_build_context(text)))
 
 
 # ---------------------------------------------------------------------------
@@ -1114,27 +1359,13 @@ def _strip_leading_noise(text: str, start: int, end: int) -> tuple[str, int]:
     return stripped, start + offset
 
 
-def _deduplicate(entities: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    seen: set[tuple[int, int]] = set()
-    result: list[dict[str, Any]] = []
-    for e in entities:
-        key = (e["start"], e["end"])
-        if key not in seen:
-            seen.add(key)
-            result.append(e)
-    return result
-
-
 def detect_by_context(
-    text: str, excluded_entities: list[dict[str, Any]] = []
-) -> list[dict[str, Any]]:
-    """Run all context-based detectors and return merged spans sorted by position."""
-    if excluded_entities is None:
-        excluded_entities = []
-
+    text: str, excluded_entities: list[dict[str, Any]] | None = None
+) -> list[Entity]:
+    """Run all context detectors from raw text and return resolved spans."""
+    ctx = _build_context(text)
     entities: list[dict[str, Any]] = []
-    entities.extend(detect_name(text))
-    entities.extend(detect_username(text))
-    entities.extend(detect_address(text))
-    entities.sort(key=lambda e: e["start"])
-    return entities
+    entities.extend(_detect_name_context(ctx))
+    entities.extend(_detect_username_context(ctx))
+    entities.extend(_detect_address_context(ctx))
+    return _resolve_entities(entities, excluded_entities)

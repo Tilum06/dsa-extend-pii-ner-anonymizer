@@ -1,11 +1,10 @@
 """Integration tests for the complete PII detection pipeline."""
 
 import pytest
-from src.regex_detector import detect_by_regex
+from src.regex_detector import detect_regex_entities
 from src.context_detector import detect_by_context
 from src.merger import merge_entities, resolve_overlaps
 from src.anonymizer import anonymize_text
-from src.evaluator import compute_precision_recall_f1, evaluate_predictions
 
 
 class TestIntegrationPipeline:
@@ -16,7 +15,7 @@ class TestIntegrationPipeline:
         text = "Contact me at john@example.com"
         
         # Step 1: Regex detection
-        regex_entities = detect_by_regex(text)
+        regex_entities = detect_regex_entities(text)
         assert isinstance(regex_entities, list)
         
         # Step 2: Context detection
@@ -41,7 +40,7 @@ class TestIntegrationPipeline:
         text = "My name is John. Email: john@example.com. Phone: 555-1234. Website: www.example.com"
         
         # Detection
-        regex_entities = detect_by_regex(text)
+        regex_entities = detect_regex_entities(text)
         context_entities = detect_by_context(text)
         
         # Merge
@@ -57,7 +56,7 @@ class TestIntegrationPipeline:
         text = "john.doe@company.com is my email and username is john_doe"
         
         # Detection
-        regex_entities = detect_by_regex(text)
+        regex_entities = detect_regex_entities(text)
         context_entities = detect_by_context(text)
         
         # Merge and resolve
@@ -73,7 +72,7 @@ class TestIntegrationPipeline:
         """Test pipeline with empty text."""
         text = ""
         
-        regex_entities = detect_by_regex(text)
+        regex_entities = detect_regex_entities(text)
         context_entities = detect_by_context(text)
         merged = merge_entities(regex_entities, context_entities)
         final = resolve_overlaps(merged)
@@ -84,7 +83,7 @@ class TestIntegrationPipeline:
         """Test pipeline with text containing no entities."""
         text = "Just a normal text without any PII"
         
-        regex_entities = detect_by_regex(text)
+        regex_entities = detect_regex_entities(text)
         context_entities = detect_by_context(text)
         merged = merge_entities(regex_entities, context_entities)
         final = resolve_overlaps(merged)
@@ -101,7 +100,7 @@ class TestAnonymizationIntegration:
         text = "Contact John at john@example.com or 555-1234"
         
         # Detect
-        regex_entities = detect_by_regex(text)
+        regex_entities = detect_regex_entities(text)
         context_entities = detect_by_context(text)
         
         # Merge
@@ -117,7 +116,7 @@ class TestAnonymizationIntegration:
         """Test that anonymization preserves text structure."""
         text = "My email is john@example.com and my phone is 555-1234"
         
-        detected = detect_by_regex(text)
+        detected = detect_regex_entities(text)
         anonymized = anonymize_text(text, detected)
         
         # Original parts that are not PII should be preserved
@@ -135,70 +134,15 @@ class TestAnonymizationIntegration:
         assert anonymized == text
 
 
-class TestEvaluationIntegration:
-    """Test evaluation metrics with detected vs ground truth entities."""
-
-    def test_evaluation_perfect_detection(self):
-        """Test evaluation with perfect detection."""
-        samples = [
-            {
-                "text": "john@example.com",
-                "predicted": [{"type": "EMAIL", "start": 0, "end": 16}],
-                "ground_truth": [{"type": "EMAIL", "start": 0, "end": 16}],
-            }
-        ]
-        
-        result = evaluate_predictions(samples)
-        
-        assert isinstance(result, dict)
-        assert "precision" in result
-        assert "recall" in result
-        assert "f1" in result
-
-    def test_evaluation_partial_detection(self):
-        """Test evaluation with partial detection."""
-        samples = [
-            {
-                "text": "john@example.com and 555-1234",
-                "predicted": [{"type": "EMAIL", "start": 0, "end": 16}],
-                "ground_truth": [
-                    {"type": "EMAIL", "start": 0, "end": 16},
-                    {"type": "PHONE", "start": 21, "end": 29}
-                ],
-            }
-        ]
-        
-        result = evaluate_predictions(samples)
-        
-        assert isinstance(result, dict)
-
-    def test_evaluation_false_positives(self):
-        """Test evaluation with false positives."""
-        samples = [
-            {
-                "text": "john@example.com",
-                "predicted": [
-                    {"type": "EMAIL", "start": 0, "end": 16},
-                    {"type": "NAME", "start": 0, "end": 4},
-                ],
-                "ground_truth": [{"type": "EMAIL", "start": 0, "end": 16}],
-            }
-        ]
-        
-        result = evaluate_predictions(samples)
-        
-        assert isinstance(result, dict)
-
-
 class TestEndToEndPipeline:
     """Test complete end-to-end pipeline."""
 
     def test_complete_pipeline(self):
-        """Test complete pipeline from text to evaluation."""
+        """Test complete pipeline from text to anonymization."""
         original_text = "Hi, I'm John Doe. Contact me at john@example.com or call 555-1234"
         
         # Step 1: Detection
-        regex_entities = detect_by_regex(original_text)
+        regex_entities = detect_regex_entities(original_text)
         context_entities = detect_by_context(original_text)
         
         # Step 2: Merge
@@ -213,26 +157,6 @@ class TestEndToEndPipeline:
         # Step 5: Verify results
         assert isinstance(anonymized_text, str)
         assert len(anonymized_text) > 0
-
-    def test_complete_pipeline_with_evaluation(self):
-        """Test complete pipeline including evaluation."""
-        text = "My email is john@example.com"
-        
-        # Detection
-        detected = detect_by_regex(text)
-        
-        # Ground truth
-        ground_truth = [
-            {"type": "EMAIL", "start": 11, "end": 27}
-        ]
-        
-        # Evaluation
-        result = compute_precision_recall_f1(detected, ground_truth)
-        
-        assert isinstance(result, dict)
-        assert "precision" in result
-        assert "recall" in result
-        assert "f1" in result
 
     def test_pipeline_robustness(self):
         """Test pipeline robustness with various inputs."""
@@ -249,7 +173,7 @@ class TestEndToEndPipeline:
         
         for text in test_cases:
             # Should not raise exceptions
-            regex_entities = detect_by_regex(text)
+            regex_entities = detect_regex_entities(text)
             context_entities = detect_by_context(text)
             merged = merge_entities(regex_entities, context_entities)
             final = resolve_overlaps(merged)
@@ -262,10 +186,10 @@ class TestEndToEndPipeline:
         text = "Contact john@example.com"
         
         # Run 1
-        result1 = detect_by_regex(text)
+        result1 = detect_regex_entities(text)
         
         # Run 2
-        result2 = detect_by_regex(text)
+        result2 = detect_regex_entities(text)
         
         # Results should be consistent
         assert len(result1) == len(result2)

@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import re
 from typing import Any
-from src.tokenizer import tokenize_with_offsets
 
 # ---------------------------------------------------------------------------
 # Regex patterns
@@ -25,10 +24,13 @@ URL_PATTERN = re.compile(r"(?:https?://|www\.)[^\s]+")
 # Covers:
 #   +84 912 345 678  |  0912345678  |  0912 345 678  |  0912-345-678
 #   (091) 234 5678   |  +1 (415) 555-2671  |  415.555.2671
+#   0475 4429797
 PHONE_PATTERN = re.compile(
     r"(?<![a-zA-Z0-9@/])"
     r"(?:"
     r"\d{8,15}"  # continuous digits
+    r"|"
+    r"\d{4}[\s.\-]\d{6,8}"  # mobile format with one separator
     r"|"
     r"(?:\+\d{1,3}[\s.\-]?)?"
     r"(?:\(?\d{2,5}\)?[\s.\-])?"
@@ -64,14 +66,6 @@ def _strip_trailing_punctuation(
 def _count_digits(s: str) -> int:
     """Count the number of digit characters in a string."""
     return sum(1 for ch in s if ch.isdigit())
-
-
-def _is_inside_any_span(start: int, end: int, spans: list[tuple[int, int]]) -> bool:
-    """Return True if [start, end) is fully contained inside any span."""
-    for sp_start, sp_end in spans:
-        if start >= sp_start and end <= sp_end:
-            return True
-    return False
 
 
 def _overlaps_any_span(start: int, end: int, spans: list[tuple[int, int]]) -> bool:
