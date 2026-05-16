@@ -1287,7 +1287,8 @@ def _detect_address_context(ctx: DetectorContext) -> list[dict[str, Any]]:
             elif lower[value_start : value_start + 3] == "is ":
                 clause_start = value_start + 3
             else:
-                clause_start = _find_clause_start(text, trigger_pos)
+                search_start = trigger_pos + len(trigger)
+                continue
             clause_end = _find_clause_end(text, end_of_trigger)
             addr_text, actual_start = _strip_leading_noise(
                 text, clause_start, clause_end

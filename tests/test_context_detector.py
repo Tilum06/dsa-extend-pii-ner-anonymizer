@@ -199,8 +199,18 @@ class TestDetectAddress:
         """Test detecting address after 'city' trigger."""
         text = "city: New York"
         result = detect_address(text)
-        
-        assert isinstance(result, list)
+
+        assert result == [{"type": "ADDRESS", "text": "New York", "start": 6, "end": 14}]
+
+    def test_detect_address_does_not_mark_prose_city_reference(self):
+        """Test prose mentions of cities/streets do not become addresses."""
+        text = (
+            "From humble beginnings in a small village in Japan, Yasuko Alvarez "
+            "embarked on a journey to the bustling streets of New York City."
+        )
+        result = detect_address(text)
+
+        assert result == []
 
     def test_detect_address_abbreviations(self):
         """Test detecting address with abbreviations."""
