@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 from typing import Any
-
+from src.tokenizer import tokenize_with_offsets
 
 # ---------------------------------------------------------------------------
 # Regex patterns
@@ -19,9 +19,7 @@ EMAIL_PATTERN = re.compile(
 
 # Matches URLs starting with http://, https://, or www.
 # Captures the rest until whitespace, then trailing punctuation is stripped.
-URL_PATTERN = re.compile(
-    r"(?:https?://|www\.)[^\s]+"
-)
+URL_PATTERN = re.compile(r"(?:https?://|www\.)[^\s]+")
 
 # Broad phone pattern – we post-validate with digit count.
 # Covers:
@@ -30,12 +28,12 @@ URL_PATTERN = re.compile(
 PHONE_PATTERN = re.compile(
     r"(?<![a-zA-Z0-9@/])"
     r"(?:"
-        r"\d{8,15}"                                  # continuous digits
-        r"|"
-        r"(?:\+\d{1,3}[\s.\-]?)?"
-        r"(?:\(?\d{2,5}\)?[\s.\-])?"
-        r"\d{2,5}"
-        r"(?:[\s.\-]\d{2,5}){0,4}"
+    r"\d{8,15}"  # continuous digits
+    r"|"
+    r"(?:\+\d{1,3}[\s.\-]?)?"
+    r"(?:\(?\d{2,5}\)?[\s.\-])?"
+    r"\d{2,5}"
+    r"(?:[\s.\-]\d{2,5}){0,4}"
     r")"
     r"(?![a-zA-Z0-9@])"
 )
@@ -49,7 +47,10 @@ _TRAILING_PUNCT = set(".,;:!?)]}\"'")
 # Helper functions
 # ---------------------------------------------------------------------------
 
-def _strip_trailing_punctuation(text: str, start: int, end: int) -> tuple[str, int, int]:
+
+def _strip_trailing_punctuation(
+    text: str, start: int, end: int
+) -> tuple[str, int, int]:
     """Strip common trailing punctuation from a matched span.
 
     Returns (cleaned_text, new_start, new_end).
@@ -79,6 +80,11 @@ def _overlaps_any_span(start: int, end: int, spans: list[tuple[int, int]]) -> bo
         if start < sp_end and end > sp_start:
             return True
     return False
+
+
+def _entity_spans(entities: list[dict[str, Any]]) -> list[tuple[int, int]]:
+    """Extract (start, end) spans from already-detected entities."""
+    return [(entity["start"], entity["end"]) for entity in entities]
 
 
 def _resolve_regex_overlaps(entities: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -115,6 +121,7 @@ def _resolve_regex_overlaps(entities: list[dict[str, Any]]) -> list[dict[str, An
 # Individual detectors
 # ---------------------------------------------------------------------------
 
+
 def detect_email(text: str) -> list[dict[str, Any]]:
     """Detect email address spans in *text*.
 
@@ -132,12 +139,14 @@ def detect_email(text: str) -> list[dict[str, Any]]:
         if not entity_text:
             continue
 
-        results.append({
-            "type": "EMAIL",
-            "text": entity_text,
-            "start": start,
-            "end": end,
-        })
+        results.append(
+            {
+                "type": "EMAIL",
+                "text": entity_text,
+                "start": start,
+                "end": end,
+            }
+        )
     return results
 
 
@@ -163,31 +172,32 @@ def detect_url(text: str) -> list[dict[str, Any]]:
         if not entity_text:
             continue
 
-        results.append({
-            "type": "URL",
-            "text": entity_text,
-            "start": start,
-            "end": end,
-        })
+        results.append(
+            {
+                "type": "URL",
+                "text": entity_text,
+                "start": start,
+                "end": end,
+            }
+        )
     return results
 
 
-def detect_phone(text: str) -> list[dict[str, Any]]:
+def detect_phone(
+    text: str,
+    excluded_entities: list[dict[str, Any]] | None = None,
+) -> list[dict[str, Any]]:
     """Detect phone number spans in *text*.
 
     Validation rules applied after regex matching:
     - Total digit count must be between 9 and 15 (inclusive).
-    - The candidate must not be inside an EMAIL or URL span.
+    - The candidate must not overlap with known EMAIL or URL entities.
     - Leading/trailing whitespace and punctuation are trimmed while
       preserving correct character indexes.
 
     Returns a list of entity dicts with keys: type, text, start, end.
     """
-    # First, find all EMAIL and URL spans so we can exclude phone candidates
-    # that fall inside them.
-    email_spans = [(m.start(), m.end()) for m in EMAIL_PATTERN.finditer(text)]
-    url_spans = [(m.start(), m.end()) for m in URL_PATTERN.finditer(text)]
-    excluded_spans = email_spans + url_spans
+    excluded_spans = _entity_spans(excluded_entities or [])
 
     results: list[dict[str, Any]] = []
     for match in PHONE_PATTERN.finditer(text):
@@ -217,23 +227,26 @@ def detect_phone(text: str) -> list[dict[str, Any]]:
 
         # Guard against matching part of a larger alphanumeric token.
         # Check character immediately before start and after end.
-        if start > 0 and (text[start - 1].isalnum() or text[start - 1] == '@'):
-            continue    
-        if end < len(text) and (text[end].isalnum() or text[end] == '@'):
+        if start > 0 and (text[start - 1].isalnum() or text[start - 1] == "@"):
+            continue
+        if end < len(text) and (text[end].isalnum() or text[end] == "@"):
             continue
 
-        results.append({
-            "type": "PHONE",
-            "text": entity_text,
-            "start": start,
-            "end": end,
-        })
+        results.append(
+            {
+                "type": "PHONE",
+                "text": entity_text,
+                "start": start,
+                "end": end,
+            }
+        )
     return results
 
 
 # ---------------------------------------------------------------------------
 # Public aggregated detector
 # ---------------------------------------------------------------------------
+
 
 def detect_regex_entities(text: str) -> list[dict[str, Any]]:
     """Run all regex-based detectors and return a clean, non-overlapping,
@@ -242,91 +255,15 @@ def detect_regex_entities(text: str) -> list[dict[str, Any]]:
     Priority for overlap resolution: EMAIL > URL > PHONE.
     Output is sorted by ``start`` index ascending.
     """
+    email_entities = detect_email(text)
+    url_entities = detect_url(text)
+    phone_entities = detect_phone(text, email_entities + url_entities)
+
     all_entities: list[dict[str, Any]] = []
-    all_entities.extend(detect_email(text))
-    all_entities.extend(detect_url(text))
-    all_entities.extend(detect_phone(text))
+    all_entities.extend(email_entities)
+    all_entities.extend(url_entities)
+    all_entities.extend(phone_entities)
 
     # Resolve any remaining overlaps.
     clean = _resolve_regex_overlaps(all_entities)
     return clean
-
-
-# Alias so the rest of the project (web/app.py, tests, merger) can import
-# the original name used in the skeleton.
-detect_by_regex = detect_regex_entities
-
-
-# ---------------------------------------------------------------------------
-# Self-test
-# ---------------------------------------------------------------------------
-
-if __name__ == "__main__":
-    test_cases = [
-        # Case A
-        (
-            "Contact: john@gmail.com, phone: +84 912 345 678.",
-            "Case A: email + phone",
-        ),
-        # Case B
-        (
-            "Visit https://example.com/profile/0912345678 now.",
-            "Case B: URL containing phone-like digits",
-        ),
-        # Case C
-        (
-            "My email is john123@gmail.com",
-            "Case C: email with digits (no false phone)",
-        ),
-        # Case D
-        (
-            "Call me at 0912-345-678 or 0912 345 678.",
-            "Case D: two phone numbers",
-        ),
-        # Case E
-        (
-            "Website: www.example.com.",
-            "Case E: www URL with trailing period",
-        ),
-        # Case F
-        (
-            "The year is 2024 and the code is 12345.",
-            "Case F: no entities (short numbers)",
-        ),
-        # Case G
-        (
-            "Emergency number: (091) 234 5678.",
-            "Case G: phone with parentheses",
-        ),
-        # Case H
-        (
-            "Send to jane.doe+test@example.co.uk!",
-            "Case H: email with plus and exclamation",
-        ),
-        # Mixed
-        (
-            "Email me at john@gmail.com, visit http://example.com/path?q=1 "
-            "or www.example.com, call +1 (415) 555-2671 or 415.555.2671.",
-            "Mixed: all entity types",
-        ),
-        # Edge: empty
-        (
-            "",
-            "Edge: empty string",
-        ),
-    ]
-
-    for text, label in test_cases:
-        print(f"\n{'='*60}")
-        print(f"  {label}")
-        print(f"  Input: {text!r}")
-        print(f"{'='*60}")
-        entities = detect_regex_entities(text)
-        if not entities:
-            print("  (no entities detected)")
-        for ent in entities:
-            print(
-                f"  {ent['type']:6s}  "
-                f"[{ent['start']:3d}:{ent['end']:3d}]  "
-                f"{ent['text']!r}"
-            )

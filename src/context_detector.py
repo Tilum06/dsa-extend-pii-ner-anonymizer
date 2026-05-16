@@ -4,134 +4,441 @@ from __future__ import annotations
 
 import re
 from typing import Any
-
+import src.tokenizer as tokenizer
 
 # ---------------------------------------------------------------------------
 # Constants & Triggers
 # ---------------------------------------------------------------------------
 
-NAME_TRIGGERS = ["my name is", "full name", "name:"]
-USERNAME_TRIGGERS = ["username", "user name", "account", "handle"]
-ADDRESS_TRIGGERS = ["street", "road", "avenue", "district", "city", "st.", "rd.", "ave."]
+NAME_TRIGGERS = {"my name is", "full name", "name:"}
+USERNAME_TRIGGERS = {"username", "user name", "account", "handle"}
+ADDRESS_TRIGGERS = {
+    "street",
+    "road",
+    "avenue",
+    "district",
+    "city",
+    "st.",
+    "rd.",
+    "ave.",
+}
 
 _WEAK_USERNAME_TRIGGERS = {"account", "handle"}
 _USERNAME_RE = re.compile(r"@?[A-Za-z0-9_][\w.\-]*")
 
 # Title prefixes to strip from name candidates
-_TITLE_PREFIXES = {"dr.", "mr.", "mrs.", "ms.", "prof.", "dr", "mr", "mrs", "ms", "prof"}
+_TITLE_PREFIXES = {
+    "dr.",
+    "mr.",
+    "mrs.",
+    "ms.",
+    "prof.",
+    "dr",
+    "mr",
+    "mrs",
+    "ms",
+    "prof",
+}
 
 # Address abbreviations — dấu "." ở đây KHÔNG phải cuối câu
-_ADDR_ABBREVS = {"st.", "rd.", "ave.", "apt.", "blvd.", "dr.", "ln.", "ct.", "pl.", "ter."}
+_ADDR_ABBREVS = {
+    "st.",
+    "rd.",
+    "ave.",
+    "apt.",
+    "blvd.",
+    "dr.",
+    "ln.",
+    "ct.",
+    "pl.",
+    "ter.",
+}
 
 # Tokens whose trailing "." is NOT a sentence boundary
 _NO_SPLIT_ABBREVS = (
     _TITLE_PREFIXES
     | _ADDR_ABBREVS
     | {
-        "jr.", "sr.", "etc.", "vs.", "fig.", "no.", "vol.", "inc.", "ltd.",
-        "corp.", "u.s.", "u.k.", "j.k.", "e.g.", "i.e.", "approx.",
-        "dept.", "est.",
+        "jr.",
+        "sr.",
+        "etc.",
+        "vs.",
+        "fig.",
+        "no.",
+        "vol.",
+        "inc.",
+        "ltd.",
+        "corp.",
+        "u.s.",
+        "u.k.",
+        "j.k.",
+        "e.g.",
+        "i.e.",
+        "approx.",
+        "dept.",
+        "est.",
     }
 )
 
 # Top-level domains — "." before them is NOT a sentence boundary
 _TLDS = {
-    "com", "net", "org", "edu", "gov", "io", "co", "info", "biz",
-    "vn", "uk", "us", "au", "ca", "de", "fr", "jp", "cn",
-    "me", "tv", "app", "dev", "ai",
+    "com",
+    "net",
+    "org",
+    "edu",
+    "gov",
+    "io",
+    "co",
+    "info",
+    "biz",
+    "vn",
+    "uk",
+    "us",
+    "au",
+    "ca",
+    "de",
+    "fr",
+    "jp",
+    "cn",
+    "me",
+    "tv",
+    "app",
+    "dev",
+    "ai",
 }
 
 # Label triggers — sau dấu ":" gần như chắc chắn là tên
-_LABEL_TRIGGERS = [
+_LABEL_TRIGGERS = {
     # Dạng đơn giản
-    "contact person:", "submitted by:", "author:", "written by:",
-    "signed by:", "prepared by:", "reported by:", "from:",
-    "sender:", "recipient:", "applicant:", "client:", "patient:",
+    "contact person:",
+    "submitted by:",
+    "author:",
+    "written by:",
+    "signed by:",
+    "prepared by:",
+    "reported by:",
+    "from:",
+    "sender:",
+    "recipient:",
+    "applicant:",
+    "client:",
+    "patient:",
     # Dạng "X Information:" / "X Info:"
-    "contact information:", "contact info:", "personal information:",
-    "personal info:", "user information:", "profile information:",
+    "contact information:",
+    "contact info:",
+    "personal information:",
+    "personal info:",
+    "user information:",
+    "profile information:",
     # Dạng "X Details:" / "X Data:"
-    "contact details:", "personal details:", "user details:",
-    "account details:", "profile details:",
+    "contact details:",
+    "personal details:",
+    "user details:",
+    "account details:",
+    "profile details:",
     # Dạng khác hay gặp
-    "full name:", "name:", "my name is",
-    "regards,", "sincerely,", "best regards,",
-]
+    "full name:",
+    "name:",
+    "my name is",
+    "regards,",
+    "sincerely,",
+    "best regards,",
+}
 
 # Job titles dùng để dừng thu thập candidate (tránh "Mieko Mitsubishi Account Manager")
 _JOB_TITLE_STOPWORDS = {
-    "account", "manager", "director", "officer", "president", "executive",
-    "engineer", "developer", "designer", "analyst", "consultant", "architect",
-    "coordinator", "administrator", "supervisor", "specialist", "associate",
-    "representative", "assistant", "secretary", "treasurer", "chairman",
-    "partner", "founder", "owner", "principal", "professor", "doctor",
-    "attorney", "counsel", "advisor", "agent", "inspector", "auditor",
+    "account",
+    "manager",
+    "director",
+    "officer",
+    "president",
+    "executive",
+    "engineer",
+    "developer",
+    "designer",
+    "analyst",
+    "consultant",
+    "architect",
+    "coordinator",
+    "administrator",
+    "supervisor",
+    "specialist",
+    "associate",
+    "representative",
+    "assistant",
+    "secretary",
+    "treasurer",
+    "chairman",
+    "partner",
+    "founder",
+    "owner",
+    "principal",
+    "professor",
+    "doctor",
+    "attorney",
+    "counsel",
+    "advisor",
+    "agent",
+    "inspector",
+    "auditor",
 }
 
 # Suffixes chỉ tổ chức/địa điểm — candidate kết thúc bằng các từ này
 # thì là tên công ty/trường/địa điểm, KHÔNG phải tên người
 _ORG_PLACE_SUFFIXES = {
     # Loại hình công ty / doanh nghiệp
-    "company", "corporation", "corp", "incorporated", "inc",
-    "limited", "ltd", "llc", "plc", "group", "holdings", "ventures",
-    "enterprise", "enterprises", "associates", "partners", "partnership",
-    "agency", "bureau", "firm", "studio", "studios", "lab", "labs",
-    "solutions", "services", "systems", "technologies", "tech",
-    "international", "global", "national",
-
+    "company",
+    "corporation",
+    "corp",
+    "incorporated",
+    "inc",
+    "limited",
+    "ltd",
+    "llc",
+    "plc",
+    "group",
+    "holdings",
+    "ventures",
+    "enterprise",
+    "enterprises",
+    "associates",
+    "partners",
+    "partnership",
+    "agency",
+    "bureau",
+    "firm",
+    "studio",
+    "studios",
+    "lab",
+    "labs",
+    "solutions",
+    "services",
+    "systems",
+    "technologies",
+    "tech",
+    "international",
+    "global",
+    "national",
     # Loại hình tổ chức / cơ quan
-    "organization", "organisation", "foundation", "institute", "institution",
-    "association", "society", "committee", "commission", "council",
-    "department", "division", "branch", "office", "ministry",
-    "authority", "board", "federation", "union", "network", "alliance",
-    "center", "centre", "clinic", "hospital",
-
+    "organization",
+    "organisation",
+    "foundation",
+    "institute",
+    "institution",
+    "association",
+    "society",
+    "committee",
+    "commission",
+    "council",
+    "department",
+    "division",
+    "branch",
+    "office",
+    "ministry",
+    "authority",
+    "board",
+    "federation",
+    "union",
+    "network",
+    "alliance",
+    "center",
+    "centre",
+    "clinic",
+    "hospital",
     # Trường học
-    "university", "college", "school", "academy", "institute",
-    "polytechnic", "faculty", "campus",
-
+    "university",
+    "college",
+    "school",
+    "academy",
+    "institute",
+    "polytechnic",
+    "faculty",
+    "campus",
     # Địa điểm / cơ sở vật chất
-    "hotel", "motel", "resort", "hostel", "inn",
-    "restaurant", "cafe", "bar", "pub", "club", "lounge",
-    "mall", "plaza", "tower", "towers", "building", "complex",
-    "stadium", "arena", "theater", "theatre", "cinema", "gallery",
-    "museum", "library", "park", "garden", "gardens",
-    "airport", "station", "terminal", "port", "harbor",
-    "market", "store", "shop", "outlet", "warehouse",
-    "bank", "exchange",
+    "hotel",
+    "motel",
+    "resort",
+    "hostel",
+    "inn",
+    "restaurant",
+    "cafe",
+    "bar",
+    "pub",
+    "club",
+    "lounge",
+    "mall",
+    "plaza",
+    "tower",
+    "towers",
+    "building",
+    "complex",
+    "stadium",
+    "arena",
+    "theater",
+    "theatre",
+    "cinema",
+    "gallery",
+    "museum",
+    "library",
+    "park",
+    "garden",
+    "gardens",
+    "airport",
+    "station",
+    "terminal",
+    "port",
+    "harbor",
+    "market",
+    "store",
+    "shop",
+    "outlet",
+    "warehouse",
+    "bank",
+    "exchange",
 }
 
 # Từ thường đứng cuối label header (e.g. "Contact Information:", "Personal Details:")
 # Token này viết hoa nhưng KHÔNG phải tên người — loại khỏi candidate group
 _LABEL_HEADER_WORDS = {
     # Từ chỉ loại thông tin
-    "information", "info", "details", "data", "summary", "overview",
-    "profile", "record", "records", "section", "form", "sheet",
-    "report", "note", "notes", "description", "statement",
+    "information",
+    "info",
+    "details",
+    "data",
+    "summary",
+    "overview",
+    "profile",
+    "record",
+    "records",
+    "section",
+    "form",
+    "sheet",
+    "report",
+    "note",
+    "notes",
+    "description",
+    "statement",
     # Từ label hay đứng trước ":" chỉ vai trò / quan hệ
-    "witness", "nominee", "supervisor", "referee", "guarantor",
-    "beneficiary", "trustee", "guardian", "executor", "delegate",
-    "representative", "spokesperson", "liaison", "contact", "emergency",
-    "primary", "secondary", "alternate", "backup",
+    "witness",
+    "nominee",
+    "supervisor",
+    "referee",
+    "guarantor",
+    "beneficiary",
+    "trustee",
+    "guardian",
+    "executor",
+    "delegate",
+    "representative",
+    "spokesperson",
+    "liaison",
+    "contact",
+    "emergency",
+    "primary",
+    "secondary",
+    "alternate",
+    "backup",
 }
 
 # Stopwords for name token collection
 _NAME_STOPWORDS = {
-    "and", "or", "but", "the", "a", "an", "in", "at", "on", "of", "to",
-    "with", "for", "from", "by", "as", "into", "via", "about",
-    "i", "you", "he", "she", "they", "we", "it",
-    "my", "your", "his", "her", "their", "our", "its",
-    "is", "was", "are", "were", "be", "been", "being",
-    "has", "have", "had", "do", "does", "did",
-    "will", "would", "could", "should", "may", "might", "shall",
-    "works", "worked", "work", "lives", "lived", "live",
-    "graduated", "graduate", "studied", "studies", "study",
-    "joined", "joins", "join", "founded", "founds", "found",
-    "manages", "managed", "manage", "went", "goes", "go",
-    "said", "says", "say", "made", "makes", "make",
-    "took", "takes", "take", "came", "comes", "come",
-    "got", "gets", "get", "knew", "knows", "know",
-    "called", "calls", "call",
+    "and",
+    "or",
+    "but",
+    "the",
+    "a",
+    "an",
+    "in",
+    "at",
+    "on",
+    "of",
+    "to",
+    "with",
+    "for",
+    "from",
+    "by",
+    "as",
+    "into",
+    "via",
+    "about",
+    "i",
+    "you",
+    "he",
+    "she",
+    "they",
+    "we",
+    "it",
+    "my",
+    "your",
+    "his",
+    "her",
+    "their",
+    "our",
+    "its",
+    "is",
+    "was",
+    "are",
+    "were",
+    "be",
+    "been",
+    "being",
+    "has",
+    "have",
+    "had",
+    "do",
+    "does",
+    "did",
+    "will",
+    "would",
+    "could",
+    "should",
+    "may",
+    "might",
+    "shall",
+    "works",
+    "worked",
+    "work",
+    "lives",
+    "lived",
+    "live",
+    "graduated",
+    "graduate",
+    "studied",
+    "studies",
+    "study",
+    "joined",
+    "joins",
+    "join",
+    "founded",
+    "founds",
+    "found",
+    "manages",
+    "managed",
+    "manage",
+    "went",
+    "goes",
+    "go",
+    "said",
+    "says",
+    "say",
+    "made",
+    "makes",
+    "make",
+    "took",
+    "takes",
+    "take",
+    "came",
+    "comes",
+    "come",
+    "got",
+    "gets",
+    "get",
+    "knew",
+    "knows",
+    "know",
+    "called",
+    "calls",
+    "call",
 }
 
 # Verb suffix — only triggered after >= 1 name token already collected
@@ -143,7 +450,7 @@ _SPECIAL_CHARS_RE = re.compile(r"[~!@#$%^&*()\[\]{};=+?\"']")
 
 # Pronouns
 _FIRST_PERSON = {"i", "i'm", "i am", "me", "my"}
-_THIRD_PERSON  = {"he", "his", "him", "she", "her"}
+_THIRD_PERSON = {"he", "his", "him", "she", "her"}
 
 # Job detection
 _ROLE_MARKERS_RE = re.compile(
@@ -157,14 +464,55 @@ _JOB_SUFFIX_RE = re.compile(
     re.IGNORECASE,
 )
 _JOB_HARDLIST = {
-    "coach", "surgeon", "nurse", "pilot", "chef", "judge", "professional",
-    "attorney", "actress", "waitress", "mechanic", "ceo", "cto", "cfo",
-    "doctor", "lawyer", "teacher", "professor", "officer", "director",
-    "manager", "analyst", "consultant", "architect", "developer", "designer",
-    "scientist", "researcher", "writer", "editor", "journalist", "photographer",
-    "artist", "musician", "dancer", "actor", "model", "athlete", "trainer",
-    "therapist", "counselor", "advisor", "assistant", "coordinator",
-    "administrator", "supervisor", "inspector", "detective", "agent",
+    "coach",
+    "surgeon",
+    "nurse",
+    "pilot",
+    "chef",
+    "judge",
+    "professional",
+    "attorney",
+    "actress",
+    "waitress",
+    "mechanic",
+    "ceo",
+    "cto",
+    "cfo",
+    "doctor",
+    "lawyer",
+    "teacher",
+    "professor",
+    "officer",
+    "director",
+    "manager",
+    "analyst",
+    "consultant",
+    "architect",
+    "developer",
+    "designer",
+    "scientist",
+    "researcher",
+    "writer",
+    "editor",
+    "journalist",
+    "photographer",
+    "artist",
+    "musician",
+    "dancer",
+    "actor",
+    "model",
+    "athlete",
+    "trainer",
+    "therapist",
+    "counselor",
+    "advisor",
+    "assistant",
+    "coordinator",
+    "administrator",
+    "supervisor",
+    "inspector",
+    "detective",
+    "agent",
 }
 
 # Address regex — street types sorted longest first to avoid early match
@@ -174,13 +522,17 @@ _STREET_TYPES = (
     r"Square|Pines|Baron|Via|"
     r"Blvd\.|Ave\.|Ter\.|Rd\.|St\.|Dr\.|Ln\.|Ct\.|Pl\."
 )
-_DIRECTIONS = r"(?:\s+(?:North|South|East|West|Northeast|Northwest|Southeast|Southwest))?"
-_UNIT       = r"(?:\s+(?:Suite|Apt\.?|Apartment|Unit)\s+\d+)?"
+_DIRECTIONS = (
+    r"(?:\s+(?:North|South|East|West|Northeast|Northwest|Southeast|Southwest))?"
+)
+_UNIT = r"(?:\s+(?:Suite|Apt\.?|Apartment|Unit)\s+\d+)?"
 
 _ADDRESS_RE = re.compile(
-    r"\b(\d{1,5})(?!\d)\s+"                   # house number: 1–5 digits (no longer number)
-    r"((?:[A-Z0-9][A-Za-z0-9]*\s+)+?)"       # street name words (non-greedy)
-    r"(" + _STREET_TYPES + r")"              # street type (longest-first)
+    r"\b(\d{1,5})(?!\d)\s+"  # house number: 1–5 digits (no longer number)
+    r"((?:[A-Z0-9][A-Za-z0-9]*\s+)+?)"  # street name words (non-greedy)
+    r"("
+    + _STREET_TYPES
+    + r")"  # street type (longest-first)
     + _DIRECTIONS
     + _UNIT
     + r"\b",
@@ -193,6 +545,7 @@ _EMAIL_RE = re.compile(r"[A-Za-z0-9_.+-]+@[A-Za-z0-9-]+\.[A-Za-z0-9-.]+")
 # ---------------------------------------------------------------------------
 # Sentence splitter
 # ---------------------------------------------------------------------------
+
 
 def _split_sentences(text: str) -> list[tuple[str, int]]:
     """Split text into (sentence, start_offset) pairs.
@@ -225,7 +578,9 @@ def _split_sentences(text: str) -> list[tuple[str, int]]:
 
                 # Looks like a TLD (email / URL) → not a sentence boundary
                 after_dot = i + 1
-                tld_m = re.match(r"([a-z]{2,6})", text[after_dot : after_dot + 7].lower())
+                tld_m = re.match(
+                    r"([a-z]{2,6})", text[after_dot : after_dot + 7].lower()
+                )
                 if tld_m and tld_m.group(1) in _TLDS:
                     i += 1
                     continue
@@ -257,8 +612,11 @@ def _split_sentences(text: str) -> list[tuple[str, int]]:
 # NAME helpers
 # ---------------------------------------------------------------------------
 
-def _extract_name_candidates(text: str) -> list[tuple[str, int, int]]:
-    """Scan text for consecutive title-cased token groups (2–4 tokens).
+
+def _extract_name_candidates(
+    sentence: tuple[str, int],
+) -> list[tuple[str, int, int]]:
+    """Scan sentences for consecutive title-cased token groups (2–4 tokens).
 
     Rules:
     - Strip leading title prefixes (Dr., Mr., etc.) and "As"
@@ -268,97 +626,58 @@ def _extract_name_candidates(text: str) -> list[tuple[str, int, int]]:
     - Minimum 2 tokens to be a valid candidate
     """
     candidates: list[tuple[str, int, int]] = []
-    tokens_with_pos = [(m.group(), m.start()) for m in re.finditer(r"\S+", text)]
 
+    sentence_text, sent_offset = sentence[0], sentence[1]
+    tokens = re.findall(r"\S+", sentence_text)
     i = 0
-    while i < len(tokens_with_pos):
-        token, pos = tokens_with_pos[i]
-        # Strip cả dấu mở ngoặc/nháy ở đầu lẫn dấu câu ở cuối
-        clean = token.lstrip("(\"'").rstrip(".,;:!?\"')")
+    while i < len(tokens):
+        token = tokens[i]
+        clean_token = token.strip(",;:!?\"'")
 
-        # Must start with uppercase letter
-        if not (clean and clean[0].isupper()):
+        # Check for title prefix
+        if clean_token.lower() in _TITLE_PREFIXES or (
+            clean_token.lower() == "as" and i + 1 < len(tokens)
+        ):
             i += 1
             continue
 
-        # Skip special characters
-        if _SPECIAL_CHARS_RE.search(clean):
-            i += 1
-            continue
+        # Check if token is a valid name token
+        if (
+            clean_token
+            and clean_token[0].isupper()
+            and not any(c.isdigit() for c in clean_token)
+            and not _SPECIAL_CHARS_RE.search(clean_token)
+        ):
+            start_idx = sentence_text.find(token, sent_offset)
+            end_idx = start_idx + len(token)
 
-        # Skip title prefixes — move to next token (actual name)
-        if clean.lower() in _TITLE_PREFIXES:
-            i += 1
-            continue
+            # Collect consecutive title-cased tokens (up to 4)
+            name_tokens = [clean_token]
+            j = i + 1
+            while j < len(tokens) and len(name_tokens) < 4:
+                next_token = tokens[j]
+                clean_next = next_token.strip(",;:!?\"'")
+                if (
+                    clean_next
+                    and clean_next[0].isupper()
+                    and not any(c.isdigit() for c in clean_next)
+                    and not _SPECIAL_CHARS_RE.search(clean_next)
+                ):
+                    name_tokens.append(clean_next)
+                    end_idx = sentence_text.find(next_token, sent_offset) + len(
+                        next_token
+                    )
+                    j += 1
+                else:
+                    break
 
-        # Skip "As" chỉ khi nó đứng đầu candidate group (e.g. "As Mieko Mitsubishi,")
-        # Không skip nếu "as" xuất hiện ở giữa câu (e.g. "I work as As a developer")
-        if clean == "As" and (i == 0 or tokens_with_pos[i - 1][0][-1] in ".!?"):
-            i += 1
-            continue
-
-        # Skip if previous token was a pure number → likely address
-        if i > 0:
-            prev = tokens_with_pos[i - 1][0].rstrip(".,;:!?")
-            if prev.isdigit():
+            if len(name_tokens) >= 2:
+                candidates.append((" ".join(name_tokens), start_idx, end_idx))
+                i = j
+            else:
                 i += 1
-                continue
-
-        # Skip if token itself starts with digit
-        if clean[0].isdigit():
+        else:
             i += 1
-            continue
-
-        # Skip stopwords
-        if clean.lower() in _NAME_STOPWORDS:
-            i += 1
-            continue
-
-        # Skip label header words (e.g. "Information", "Details", "Profile")
-        if clean.lower().rstrip(":") in _LABEL_HEADER_WORDS:
-            i += 1
-            continue
-
-        # Collect a candidate group
-        group_tokens: list[str] = []
-        group_start = pos
-        j = i
-
-        while j < len(tokens_with_pos) and len(group_tokens) < 4:
-            t, p = tokens_with_pos[j]
-            c = t.lstrip("(\"'").rstrip(".,;:!?\"')")
-
-            if not (c and c[0].isupper()):
-                break
-            if _SPECIAL_CHARS_RE.search(c):
-                break
-            if c.lower() in _NAME_STOPWORDS:
-                break
-            if c.lower() in _TITLE_PREFIXES or c.lower() in _ADDR_ABBREVS:
-                break
-            # Dừng nếu token là label header word kết thúc bằng ":" (e.g. "Information:")
-            if c.lower().rstrip(":") in _LABEL_HEADER_WORDS:
-                break
-            # Dừng nếu token là job title (tránh "Mieko Mitsubishi Account Manager")
-            if group_tokens and c.lower() in _JOB_TITLE_STOPWORDS:
-                break
-            if group_tokens and _VERB_SUFFIX_RE.fullmatch(c):
-                break
-            if c[0].isdigit():
-                break
-
-            group_tokens.append(c)
-            j += 1
-
-        # Need at least 2 tokens
-        # Loại nếu token cuối là suffix chỉ tổ chức/địa điểm (e.g. "Harvard University", "Intel Company")
-        if len(group_tokens) >= 2:
-            last_token = group_tokens[-1].lower().rstrip(".,;:!?\"'")
-            if last_token not in _ORG_PLACE_SUFFIXES:
-                candidate_text = " ".join(group_tokens)
-                candidates.append((candidate_text, group_start, group_start + len(candidate_text)))
-
-        i = j if j > i else i + 1
 
     return candidates
 
@@ -384,16 +703,16 @@ def _score_candidate(candidate: str, sentence: str, full_text: str) -> tuple[int
     """
     score = 0
     sent_lower = sentence.lower()
-    cand_lower  = candidate.lower()
-    cand_parts  = cand_lower.split()
+    cand_lower = candidate.lower()
+    cand_parts = cand_lower.split()
 
     # --- Definitive patterns (break immediately) ---
 
     # Strong triggers: "my name is X", "full name: X", "name: X"
-    for trigger in NAME_TRIGGERS + _LABEL_TRIGGERS:
+    for trigger in NAME_TRIGGERS or _LABEL_TRIGGERS:
         if trigger in sent_lower:
-            idx   = sent_lower.find(trigger)
-            after = sentence[idx + len(trigger):].strip().lstrip(":").strip()
+            idx = sent_lower.find(trigger)
+            after = sentence[idx + len(trigger) :].strip().lstrip(":").strip()
             if after.lower().startswith(cand_lower):
                 return 100, True
 
@@ -410,7 +729,9 @@ def _score_candidate(candidate: str, sentence: str, full_text: str) -> tuple[int
         return 100, True
 
     # "I was named [name]"
-    if re.search(r"\bI\s+was\s+named\s+" + re.escape(candidate), sentence, re.IGNORECASE):
+    if re.search(
+        r"\bI\s+was\s+named\s+" + re.escape(candidate), sentence, re.IGNORECASE
+    ):
         return 100, True
 
     # --- Non-definitive scoring ---
@@ -427,7 +748,8 @@ def _score_candidate(candidate: str, sentence: str, full_text: str) -> tuple[int
     # Không cần biết label là gì, chỉ cần có dấu ":" trước candidate
     colon_before = re.search(
         r":\s*\n?\s*" + re.escape(candidate),
-        sentence, re.IGNORECASE,
+        sentence,
+        re.IGNORECASE,
     )
     if colon_before:
         score += 5
@@ -438,29 +760,37 @@ def _score_candidate(candidate: str, sentence: str, full_text: str) -> tuple[int
         # Kiểm tra từ sau dấu phẩy có phải job title không
         appos_m = re.search(
             re.escape(candidate) + r"\s*,\s*(\w+(?:\s+\w+)?)",
-            sentence, re.IGNORECASE,
+            sentence,
+            re.IGNORECASE,
         )
         if appos_m:
             appos_words = appos_m.group(1).lower().split()
-            if any(w in _JOB_HARDLIST or w in _JOB_TITLE_STOPWORDS for w in appos_words):
+            if any(
+                w in _JOB_HARDLIST or w in _JOB_TITLE_STOPWORDS for w in appos_words
+            ):
                 score += 3
 
     # Signature pattern: candidate đứng trên dòng riêng, dòng tiếp theo là job title
     # e.g. "Mieko Mitsubishi\nAccount Manager\n1309..."
     sig_m = re.search(
         re.escape(candidate) + r"\s*\n\s*(\w+(?:\s+\w+)?)",
-        full_text, re.IGNORECASE,
+        full_text,
+        re.IGNORECASE,
     )
     if sig_m:
         next_line_words = sig_m.group(1).lower().split()
-        if any(w in _JOB_HARDLIST or w in _JOB_TITLE_STOPWORDS for w in next_line_words):
+        if any(
+            w in _JOB_HARDLIST or w in _JOB_TITLE_STOPWORDS for w in next_line_words
+        ):
             score += 4
 
     # Pronoun scoring — first-person beats third-person (no stacking)
-    has_first = any(re.search(r"\b" + re.escape(p) + r"\b", sent_lower)
-                    for p in _FIRST_PERSON)
-    has_third = any(re.search(r"\b" + re.escape(p) + r"\b", sent_lower)
-                    for p in _THIRD_PERSON)
+    has_first = any(
+        re.search(r"\b" + re.escape(p) + r"\b", sent_lower) for p in _FIRST_PERSON
+    )
+    has_third = any(
+        re.search(r"\b" + re.escape(p) + r"\b", sent_lower) for p in _THIRD_PERSON
+    )
 
     if has_first:
         score += 2
@@ -474,15 +804,19 @@ def _score_candidate(candidate: str, sentence: str, full_text: str) -> tuple[int
     # Repetition in full text (partial match: each part of name counted)
     repeat_count = 0
     for part in cand_parts:
-        repeat_count += len(re.findall(r"\b" + re.escape(part) + r"\b",
-                                       full_text, re.IGNORECASE))
-    repeat_count -= len(cand_parts)          # subtract the candidate itself
+        repeat_count += len(
+            re.findall(r"\b" + re.escape(part) + r"\b", full_text, re.IGNORECASE)
+        )
+    repeat_count -= len(cand_parts)  # subtract the candidate itself
     if repeat_count > 0:
-        score += min(repeat_count, 5)        # cap at +5
+        score += min(repeat_count, 5)  # cap at +5
 
     # Title prefix present before candidate anywhere in full text
-    if re.search(r"\b(?:Dr|Mr|Mrs|Ms|Prof)\.?\s+" + re.escape(candidate),
-                 full_text, re.IGNORECASE):
+    if re.search(
+        r"\b(?:Dr|Mr|Mrs|Ms|Prof)\.?\s+" + re.escape(candidate),
+        full_text,
+        re.IGNORECASE,
+    ):
         score += 1
 
     return score, False
@@ -492,6 +826,7 @@ def _score_candidate(candidate: str, sentence: str, full_text: str) -> tuple[int
 # Public detectors
 # ---------------------------------------------------------------------------
 
+
 def detect_name(text: str) -> list[dict[str, Any]]:
     """Detect NAME spans using trigger rules + scoring algorithm."""
     entities: list[dict[str, Any]] = []
@@ -499,7 +834,7 @@ def detect_name(text: str) -> list[dict[str, Any]]:
     seen_spans: set[tuple[int, int]] = set()
 
     # --- Fast path: strong triggers ---
-    for trigger in NAME_TRIGGERS + _LABEL_TRIGGERS:
+    for trigger in NAME_TRIGGERS or _LABEL_TRIGGERS:
         search_start = 0
         while True:
             trigger_pos = lower.find(trigger, search_start)
@@ -511,12 +846,14 @@ def detect_name(text: str) -> list[dict[str, Any]]:
                 after += 1
 
             name_tokens: list[str] = []
-            name_start: int | None  = None
+            name_start: int | None = None
 
             for m in re.finditer(r"\S+", text[after:]):
                 token = m.group()
                 clean = token.rstrip(".,;:!?\"'")
-                if not (clean and clean[0].isupper() and not any(c.isdigit() for c in clean)):
+                if not (
+                    clean and clean[0].isupper() and not any(c.isdigit() for c in clean)
+                ):
                     break
                 if clean.lower() in _NAME_STOPWORDS:
                     break
@@ -535,20 +872,22 @@ def detect_name(text: str) -> list[dict[str, Any]]:
                 span = (name_start, name_start + len(name_text))
                 if span not in seen_spans:
                     seen_spans.add(span)
-                    entities.append({
-                        "type": "NAME",
-                        "text": name_text,
-                        "start": span[0],
-                        "end":   span[1],
-                    })
+                    entities.append(
+                        {
+                            "type": "NAME",
+                            "text": name_text,
+                            "start": span[0],
+                            "end": span[1],
+                        }
+                    )
             search_start = trigger_pos + len(trigger)
 
     if entities:
         return entities
 
     # --- Scoring path ---
-    sentences    = _split_sentences(text)
-    candidates   = _extract_name_candidates(text)
+    sentences = _split_sentences(text)
+    candidates = _extract_name_candidates(text)
 
     if not candidates:
         return []
@@ -568,12 +907,14 @@ def detect_name(text: str) -> list[dict[str, Any]]:
             s, definitive = _score_candidate(cand_text, sent, text)
 
             if definitive:
-                entities.append({
-                    "type":  "NAME",
-                    "text":  cand_text,
-                    "start": cand_start,
-                    "end":   cand_end,
-                })
+                entities.append(
+                    {
+                        "type": "NAME",
+                        "text": cand_text,
+                        "start": cand_start,
+                        "end": cand_end,
+                    }
+                )
                 return entities
 
             best_score = max(best_score, s)
@@ -592,12 +933,14 @@ def detect_name(text: str) -> list[dict[str, Any]]:
     )
     _, winner_start, winner_end = best_scores[winner_text]
 
-    entities.append({
-        "type":  "NAME",
-        "text":  winner_text,
-        "start": winner_start,
-        "end":   winner_end,
-    })
+    entities.append(
+        {
+            "type": "NAME",
+            "text": winner_text,
+            "start": winner_start,
+            "end": winner_end,
+        }
+    )
     return entities
 
 
@@ -634,7 +977,7 @@ def detect_username(text: str) -> list[dict[str, Any]]:
                     continue
                 if text[peek] == ":":
                     after = peek + 1
-                elif lower[peek:peek + 3] == "is ":
+                elif lower[peek : peek + 3] == "is ":
                     after = peek + 3
                 else:
                     search_start = trigger_pos + 1
@@ -642,7 +985,7 @@ def detect_username(text: str) -> list[dict[str, Any]]:
             else:
                 while after < len(text) and text[after] in " \t:":
                     after += 1
-                if lower[after:after + 3] == "is ":
+                if lower[after : after + 3] == "is ":
                     after += 3
 
             while after < len(text) and text[after] == " ":
@@ -652,12 +995,14 @@ def detect_username(text: str) -> list[dict[str, Any]]:
             if m:
                 token = m.group().rstrip(".,;:!?")
                 if _USERNAME_RE.fullmatch(token):
-                    entities.append({
-                        "type":  "USERNAME",
-                        "text":  token,
-                        "start": after,
-                        "end":   after + len(token),
-                    })
+                    entities.append(
+                        {
+                            "type": "USERNAME",
+                            "text": token,
+                            "start": after,
+                            "end": after + len(token),
+                        }
+                    )
 
             search_start = trigger_pos + len(trigger)
 
@@ -679,12 +1024,14 @@ def detect_address(text: str) -> list[dict[str, Any]]:
         if _in_email(m.start(), m.end()):
             continue
         addr_text = m.group().strip()
-        entities.append({
-            "type":  "ADDRESS",
-            "text":  addr_text,
-            "start": m.start(),
-            "end":   m.start() + len(addr_text),
-        })
+        entities.append(
+            {
+                "type": "ADDRESS",
+                "text": addr_text,
+                "start": m.start(),
+                "end": m.start() + len(addr_text),
+            }
+        )
 
     # --- Fallback: trigger keywords for addresses without street type ---
     lower = text.lower()
@@ -701,11 +1048,13 @@ def detect_address(text: str) -> list[dict[str, Any]]:
                 continue
 
             clause_start = _find_clause_start(text, trigger_pos)
-            clause_end   = _find_clause_end(text, end_of_trigger)
-            addr_text, actual_start = _strip_leading_noise(text, clause_start, clause_end)
+            clause_end = _find_clause_end(text, end_of_trigger)
+            addr_text, actual_start = _strip_leading_noise(
+                text, clause_start, clause_end
+            )
 
             # Skip if leading house number has more than 5 digits
-            leading_num = re.match(r'^(\d+)', addr_text)
+            leading_num = re.match(r"^(\d+)", addr_text)
             if leading_num and len(leading_num.group(1)) > 5:
                 search_start = trigger_pos + len(trigger)
                 continue
@@ -717,12 +1066,14 @@ def detect_address(text: str) -> list[dict[str, Any]]:
                     for e in entities
                 )
                 if not overlap:
-                    entities.append({
-                        "type":  "ADDRESS",
-                        "text":  addr_text,
-                        "start": actual_start,
-                        "end":   actual_start + len(addr_text),
-                    })
+                    entities.append(
+                        {
+                            "type": "ADDRESS",
+                            "text": addr_text,
+                            "start": actual_start,
+                            "end": actual_start + len(addr_text),
+                        }
+                    )
 
             search_start = trigger_pos + len(trigger)
 
@@ -732,6 +1083,7 @@ def detect_address(text: str) -> list[dict[str, Any]]:
 # ---------------------------------------------------------------------------
 # Shared helpers
 # ---------------------------------------------------------------------------
+
 
 def _find_clause_start(text: str, pos: int) -> int:
     for i in range(pos - 1, -1, -1):
@@ -756,8 +1108,8 @@ _NOISE_RE = re.compile(
 
 def _strip_leading_noise(text: str, start: int, end: int) -> tuple[str, int]:
     raw = text[start:end]
-    m   = _NOISE_RE.match(raw)
-    offset  = m.end() if m else 0
+    m = _NOISE_RE.match(raw)
+    offset = m.end() if m else 0
     stripped = raw[offset:].strip()
     return stripped, start + offset
 
@@ -773,8 +1125,13 @@ def _deduplicate(entities: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return result
 
 
-def detect_by_context(text: str) -> list[dict[str, Any]]:
+def detect_by_context(
+    text: str, excluded_entities: list[dict[str, Any]] = []
+) -> list[dict[str, Any]]:
     """Run all context-based detectors and return merged spans sorted by position."""
+    if excluded_entities is None:
+        excluded_entities = []
+
     entities: list[dict[str, Any]] = []
     entities.extend(detect_name(text))
     entities.extend(detect_username(text))

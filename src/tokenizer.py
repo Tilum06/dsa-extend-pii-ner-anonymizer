@@ -16,6 +16,20 @@ from __future__ import annotations
 import csv
 from pathlib import Path
 from typing import Iterable
+import re
+
+TOKEN_PATTERN = re.compile(
+    r"""
+    [\w.+-]+@[\w.-]+\.[a-zA-Z]{2,}      # email
+    | https?://[^\s]+                   # url có http/https
+    | www\.[^\s]+                       # url có www
+    | \+?\d[\d\s.-]{7,}\d               # phone đơn giản
+    | [A-Za-zÀ-ỹ]+(?:[-'][A-Za-zÀ-ỹ]+)* # word, có hỗ trợ tiếng Việt
+    | \d+                               # number
+    | [^\w\s]                           # punctuation
+""",
+    re.VERBOSE,
+)
 
 
 def tokenize_text(text: str) -> list[str]:
@@ -32,6 +46,21 @@ def tokenize_text(text: str) -> list[str]:
     if text is None:
         return []
     return str(text).split()
+
+
+def tokenize_with_offsets(text: str) -> list[dict[str, str | int]]:
+    tokens = []
+    for match in TOKEN_PATTERN.finditer(text):
+        tokens.append(
+            {
+                "word": match.group(),
+                "start": match.start(),
+                "end": match.end(),
+                "tag": "O",  # default tag, có thể thay đổi sau nếu cần thiết
+            }
+        )
+
+    return tokens
 
 
 def tokenize_records(records: Iterable[dict[str, str]]) -> list[dict[str, str]]:
