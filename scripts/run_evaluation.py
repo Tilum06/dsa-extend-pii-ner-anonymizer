@@ -60,50 +60,12 @@ def load_json(path: Path) -> list[dict[str, Any]]:
         return json.load(f)
 
 
-# ---------------------------------------------------------------------------
-# Fallback per-sample evaluator (used when evaluator.py raises NotImplementedError)
-# ---------------------------------------------------------------------------
-
-def _entity_key(entity: dict[str, Any]) -> tuple[str, int, int]:
-    """Create a hashable key for an entity (type, start, end)."""
-    return (entity["type"], entity["start"], entity["end"])
-
-
-def _evaluate_sample(
-    predicted: list[dict[str, Any]],
-    ground_truth: list[dict[str, Any]],
-) -> dict[str, Any]:
-    """Compute TP, FP, FN for a single sample by exact-span matching."""
-    pred_keys = {_entity_key(e) for e in predicted}
-    gt_keys = {_entity_key(e) for e in ground_truth}
-
-    tp = len(pred_keys & gt_keys)
-    fp = len(pred_keys - gt_keys)
-    fn = len(gt_keys - pred_keys)
-
-    precision = tp / (tp + fp) if (tp + fp) else 0.0
-    recall = tp / (tp + fn) if (tp + fn) else 0.0
-    f1 = 2 * precision * recall / (precision + recall) if (precision + recall) else 0.0
-
-    return {
-        "tp": tp,
-        "fp": fp,
-        "fn": fn,
-        "precision": round(precision, 4),
-        "recall": round(recall, 4),
-        "f1": round(f1, 4),
-    }
-
-
 def evaluate_single_sample(
     predicted: list[dict[str, Any]],
     ground_truth: list[dict[str, Any]],
 ) -> dict[str, Any]:
-    """Try the project evaluator; fall back to a built-in implementation."""
-    try:
-        return compute_precision_recall_f1(predicted, ground_truth)
-    except NotImplementedError:
-        return _evaluate_sample(predicted, ground_truth)
+    """Evaluate one sample with the project evaluator."""
+    return compute_precision_recall_f1(predicted, ground_truth)
 
 
 # ---------------------------------------------------------------------------

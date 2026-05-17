@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import re
 from typing import Any
-import src.tokenizer as tokenizer
 
 # ---------------------------------------------------------------------------
 # Constants & Triggers
@@ -709,7 +708,7 @@ def _score_candidate(candidate: str, sentence: str, full_text: str) -> tuple[int
     # --- Definitive patterns (break immediately) ---
 
     # Strong triggers: "my name is X", "full name: X", "name: X"
-    for trigger in NAME_TRIGGERS or _LABEL_TRIGGERS:
+    for trigger in NAME_TRIGGERS | _LABEL_TRIGGERS:
         if trigger in sent_lower:
             idx = sent_lower.find(trigger)
             after = sentence[idx + len(trigger) :].strip().lstrip(":").strip()
@@ -834,7 +833,7 @@ def detect_name(text: str) -> list[dict[str, Any]]:
     seen_spans: set[tuple[int, int]] = set()
 
     # --- Fast path: strong triggers ---
-    for trigger in NAME_TRIGGERS or _LABEL_TRIGGERS:
+    for trigger in NAME_TRIGGERS | _LABEL_TRIGGERS:
         search_start = 0
         while True:
             trigger_pos = lower.find(trigger, search_start)
@@ -887,7 +886,9 @@ def detect_name(text: str) -> list[dict[str, Any]]:
 
     # --- Scoring path ---
     sentences = _split_sentences(text)
-    candidates = _extract_name_candidates(text)
+    candidates: list[tuple[str, int, int]] = []
+    for sentence in sentences:
+        candidates.extend(_extract_name_candidates(sentence))
 
     if not candidates:
         return []

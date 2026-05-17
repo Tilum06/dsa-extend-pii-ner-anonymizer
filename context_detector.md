@@ -1,5 +1,10 @@
 # Context Detector — Mô tả thuật toán
 
+Trạng thái final: module này đang được pipeline chính gọi qua
+`detect_by_context(text, excluded_entities=None)`. Output của module được đưa
+sang `src/merger.py`; merger mới là nơi quyết định entity cuối cùng khi có
+overlap với regex detector.
+
 ## Tổng quan
 
 `context_detector.py` là module phát hiện thực thể PII (Personally Identifiable Information)

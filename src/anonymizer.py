@@ -98,35 +98,23 @@ def build_token_entity_list(
     return result
 
 
-def anonymize_text(text: str, entities: list[dict[str, Any]] | dict[str, str]) -> str:
-    """Replace tokens with ``token-[ENTITY_TYPE]`` annotations.
+def anonymize_text(text: str, entities: list[dict[str, Any]]) -> str:
+    """Replace entity spans with ``[ENTITY_TYPE]`` placeholders.
 
     Parameters
     ----------
     text:
         The original input text.
     entities:
-        Either a list of entity dicts (with ``type``, ``start``, ``end``)
-        **or** a pre-built ``{token: entity_type}`` dictionary (for
-        backward compatibility with existing callers like ``main.py``).
+        A list of entity dicts with ``type``, ``start``, and ``end``.
 
     Returns
     -------
     str
-        The annotated text where each token is formatted as
-        ``token-[ENTITY_TYPE]``.
+        Text with detected PII spans replaced by labels such as ``[EMAIL]``.
     """
-    # Support both dict and list[dict] inputs for backward compat
-    if isinstance(entities, dict):
-        # Legacy path: entities is already {word: entity_type}
-        words = text.split()
-        replaced = []
-        for w in words:
-            entity_type = entities.get(w, "O")
-            replaced.append(f"{w}-[{entity_type}]")
-        return " ".join(replaced)
-
-    # Standard path: entities is list[dict] from the detection pipeline
-    token_list = build_token_entity_list(text, entities)
-    replaced = [f"{token}-[{entity_type}]" for token, entity_type in token_list]
-    return " ".join(replaced)
+    anonymized = text
+    for entity in sorted(entities, key=lambda e: e["start"], reverse=True):
+        label = f"[{entity['type']}]"
+        anonymized = anonymized[: entity["start"]] + label + anonymized[entity["end"] :]
+    return anonymized
