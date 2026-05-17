@@ -5,6 +5,7 @@ from pathlib import Path
 # Add parent directory to path to allow importing src
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+from src.tokenizer import tokenize_text
 from src.regex_detector import detect_regex_entities
 from src.context_detector import detect_by_context
 from src.merger import merge_entities
@@ -55,7 +56,7 @@ def detect_pii():
         regex_entities = detect_regex_entities(text)
 
         # Step 2: Context detection
-        context_entities = detect_by_context(text)
+        context_entities = detect_by_context(text, excluded_entities=regex_entities)
 
         # Step 3: Merge entities
         merged_entities = merge_entities(regex_entities, context_entities)

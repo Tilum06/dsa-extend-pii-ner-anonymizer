@@ -16,7 +16,7 @@ replace them with anonymized placeholders.
 
 ## Main Modules
 
-- `src/tokenizer.py`: tokenizes text and can produce token offsets.
+- `src/tokenizer.py`: tokenizes text with whitespace splitting for dataset compatibility.
 - `src/regex_detector.py`: detects structured PII with regular expressions.
 - `src/context_detector.py`: detects NAME, USERNAME, and ADDRESS from raw text.
 - `src/merger.py`: merges entity lists and resolves conflicts.

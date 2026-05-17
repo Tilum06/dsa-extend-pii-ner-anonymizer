@@ -70,14 +70,7 @@ def run_detection(samples: list[dict[str, Any]]) -> list[dict[str, Any]]:
         context_entities = detect_by_context(text)
 
         # --- Merge ---
-        try:
-            merged = merge_entities(regex_entities, context_entities)
-        except NotImplementedError:
-            # If merger is not yet implemented, just concatenate and sort.
-            merged = sorted(
-                regex_entities + context_entities,
-                key=lambda e: e["start"],
-            )
+        merged = merge_entities(regex_entities, context_entities)
 
         predictions.append({
             "id": sample_id,
