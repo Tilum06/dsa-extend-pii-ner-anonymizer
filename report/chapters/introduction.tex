@@ -1,3 +1,29 @@
 \section{Giới thiệu}
 
-Trong bài tập này
+Named Entity Recognition, được viết tắt là NER, là một bài toán quan trọng trong lĩnh vực xử lý ngôn ngữ tự nhiên. Mục tiêu chính của NER là phát hiện và phân loại các thực thể có ý nghĩa trong văn bản, chẳng hạn như tên người, địa điểm, tổ chức, email, số điện thoại, địa chỉ, tên tài khoản hoặc đường dẫn URL. Thay vì chỉ xem văn bản như một chuỗi ký tự thông thường, NER giúp hệ thống hiểu được những thành phần nào trong văn bản mang thông tin quan trọng và chúng thuộc loại nào.
+
+Trong thực tế, NER được ứng dụng trong nhiều bài toán khác nhau. Ví dụ, trong hệ thống tìm kiếm thông tin, NER giúp trích xuất tên người, địa danh hoặc tổ chức để cải thiện độ chính xác khi truy vấn. Trong lĩnh vực chăm sóc khách hàng, NER có thể dùng để nhận diện thông tin đơn hàng, địa chỉ giao hàng hoặc số điện thoại của người dùng. Trong các hệ thống quản lý tài liệu, NER hỗ trợ tự động phân loại và trích xuất thông tin quan trọng từ văn bản. Đặc biệt, đối với bài toán bảo vệ dữ liệu cá nhân, NER có vai trò phát hiện các thông tin định danh cá nhân, từ đó phục vụ cho việc ẩn danh hoặc che giấu dữ liệu nhạy cảm trước khi lưu trữ, chia sẻ hoặc xử lý tiếp.
+
+Trong phạm vi project này, bài toán được tập trung vào việc nhận diện và ẩn danh thông tin cá nhân trong văn bản. Các loại thông tin cần phát hiện bao gồm \texttt{NAME}, \texttt{EMAIL}, \texttt{PHONE}, \texttt{ADDRESS}, \texttt{USERNAME} và \texttt{URL}. Đây là những dạng dữ liệu có khả năng định danh trực tiếp hoặc gián tiếp một cá nhân. Ví dụ, một đoạn văn bản như:
+
+\begin{verbatim}
+My name is John Smith and my email is john@gmail.com.
+\end{verbatim}
+
+sau khi xử lý có thể được chuyển thành:
+
+\begin{verbatim}
+My name is [NAME] and my email is [EMAIL].
+\end{verbatim}
+
+Cách xử lý này giúp giảm nguy cơ lộ thông tin cá nhân, đồng thời vẫn giữ lại cấu trúc tổng quát của văn bản để phục vụ cho các bước phân tích tiếp theo.
+
+Có nhiều hướng tiếp cận khác nhau để giải quyết bài toán NER. Hướng thứ nhất là sử dụng các phương pháp học máy hoặc học sâu, trong đó mô hình được huấn luyện trên dữ liệu đã gán nhãn để tự học cách nhận diện thực thể. Các mô hình hiện đại có thể đạt độ chính xác cao, đặc biệt khi có lượng dữ liệu lớn và tài nguyên tính toán phù hợp. Tuy nhiên, hướng tiếp cận này thường yêu cầu quá trình huấn luyện phức tạp, phụ thuộc nhiều vào dữ liệu, và khó giải thích rõ từng quyết định của hệ thống.
+
+Hướng thứ hai là sử dụng phương pháp rule-based, tức là xây dựng các luật thủ công dựa trên đặc điểm chuỗi, biểu thức chính quy và ngữ cảnh xuất hiện của thực thể. Ví dụ, email thường có ký tự \texttt{@} và tên miền phía sau, URL thường bắt đầu bằng \texttt{http://}, \texttt{https://} hoặc \texttt{www.}, còn số điện thoại thường là chuỗi chữ số có độ dài nhất định và có thể chứa dấu cách, dấu gạch ngang hoặc mã quốc gia. Đối với các thực thể khó hơn như tên người hoặc địa chỉ, hệ thống có thể dựa vào các từ khóa ngữ cảnh như \texttt{my name is}, \texttt{full name}, \texttt{address}, \texttt{street}, \texttt{road}, \texttt{city}, v.v.
+
+Trong project này, nhóm lựa chọn hướng rule-based thay vì machine learning hoặc deep learning. Lý do là project tập trung vào việc áp dụng các thuật toán xử lý chuỗi, regular expression, keyword matching, token scanning và xử lý khoảng giao nhau giữa các entity. Cách tiếp cận này phù hợp với mục tiêu học thuật vì dễ hiện thực, dễ kiểm soát, dễ giải thích và không cần quá trình huấn luyện mô hình. Ngoài ra, rule-based method cũng cho phép từng thành viên trong nhóm phát triển các module độc lập, sau đó tích hợp lại thành một pipeline hoàn chỉnh.
+
+Pipeline tổng quát của hệ thống gồm các bước chính. Đầu tiên, dữ liệu thô được đọc từ file CSV và xử lý ở bước preprocessing. Trong bước này, các token và nhãn BIO trong dataset được chuyển thành danh sách ground truth entities để phục vụ đánh giá. Tiếp theo, hệ thống sử dụng regex-based detector để nhận diện các thực thể có cấu trúc rõ ràng như email, số điện thoại và URL. Sau đó, context-based detector được dùng để nhận diện các thực thể phụ thuộc nhiều vào ngữ cảnh như tên người, địa chỉ và username. Kết quả từ hai detector được đưa vào module merger để gộp, loại bỏ trùng lặp và xử lý các entity bị chồng lấn. Cuối cùng, hệ thống thực hiện ẩn danh văn bản và đánh giá kết quả bằng các chỉ số Precision, Recall và F1-score.
+
+Tóm lại, bài toán NER trong project này không chỉ có ý nghĩa trong việc nhận diện thông tin từ văn bản, mà còn gắn liền với nhu cầu bảo vệ dữ liệu cá nhân. Việc xây dựng một hệ thống rule-based giúp nhóm hiểu rõ hơn về cách biểu diễn dữ liệu văn bản, cách phát hiện mẫu chuỗi, cách xử lý entity overlap và cách đánh giá kết quả nhận diện. Đây là nền tảng quan trọng để mở rộng sang các hệ thống NER phức tạp hơn trong tương lai.
