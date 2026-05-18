@@ -28,6 +28,9 @@
 % FOR DEMONSTRATION PURPOSES, REMOVE IN PRODUCTION
 \usepackage{mwe}
 
+% Hyperlinks
+\usepackage{hyperref}
+
 \usepackage{tikz}
 \usetikzlibrary{positioning, arrows.meta, shadows, shapes.geometric}
 % Sub-preambles
@@ -37,7 +40,7 @@
 \usepackage{booktabs}
 % Configurations
 \coursename{DSA-Extended}
-\reporttype{Báo cáo bài tập lớn (Mỏ rộng)}
+\reporttype{Báo cáo bài tập lớn (Mở rộng)}
 \title{PII-NER-ANONYMIZER}
 \advisor{Vương Bá Thịnh}
 \stuname{Trần Đình Ý & 2414100\\
@@ -65,6 +68,7 @@
 \pagenumbering{roman}
 \setcounter{page}{1}
 
+\input{chapters/abstract.tex}
 \clearpage
 
 \tableofcontents
@@ -87,7 +91,7 @@
 \begin{table}[H]
     \centering
     \renewcommand{\arraystretch}{1.5}
-    \begin{tabular}{|c|p{3.6cm}|p{2.4cm}|p{6.2cm}|p{1.8cm}|}
+    \begin{tabular}{|c|p{3.8cm}|p{2.4cm}|p{6.2cm}|p{1.8cm}|}
         \hline
         \textbf{STT} & \centering\textbf{HỌ VÀ TÊN}    & \centering\textbf{MSSV} & \centering\textbf{NHIỆM VỤ} & \centering\arraybackslash\textbf{KẾT QUẢ} \\
         \hline
@@ -128,9 +132,16 @@
 \pagestyle{fancy}
 
 \input{chapters/1_intro.tex}
+\clearpage
+
 \input{chapters/2_pipeline.tex}
+\clearpage
+
 \section{Thiết kế module}
 \input{chapters/3_2-3_3.tex}
+\clearpage
+
+\input{chapters/5_conclusion_future_work.tex}
 \clearpage
 
 \end{document}
