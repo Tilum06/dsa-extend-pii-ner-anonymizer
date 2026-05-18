@@ -10,7 +10,7 @@ replace them with anonymized placeholders.
 1. Raw text is passed into detector modules.
 2. Regex detectors find structured PII such as email, phone number, and URL.
 3. Context detectors find entities that need surrounding text, such as name,
-   username, and address.
+   organization, location, username, and address.
 4. The merger resolves overlaps and combines detector outputs.
 5. The anonymizer replaces detected spans in the original text.
 
@@ -18,7 +18,7 @@ replace them with anonymized placeholders.
 
 - `src/tokenizer.py`: tokenizes text with whitespace splitting for dataset compatibility.
 - `src/regex_detector.py`: detects structured PII with regular expressions.
-- `src/context_detector.py`: detects NAME, USERNAME, and ADDRESS from raw text.
+- `src/context_detector.py`: detects NAME, ORGANIZATION, LOCATION, USERNAME, and ADDRESS from raw text.
 - `src/merger.py`: merges entity lists and resolves conflicts.
 - `src/anonymizer.py`: replaces detected entities with anonymized labels.
 - `scripts/run_detection.py`: runs the detection pipeline over input data.
@@ -41,6 +41,8 @@ context internally and passes it to the individual detectors.
 Available public functions:
 
 - `detect_name(text)`
+- `detect_organization(text)`
+- `detect_location(text)`
 - `detect_username(text)`
 - `detect_address(text)`
 - `detect_by_context(text, excluded_entities=None)`

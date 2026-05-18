@@ -11,6 +11,8 @@ const ENTITY_COLORS = {
     URL:      { color: '#06b6d4', bg: 'rgba(6,182,212,0.15)'  },
     PHONE:    { color: '#10b981', bg: 'rgba(16,185,129,0.15)' },
     ADDRESS:  { color: '#f97316', bg: 'rgba(249,115,22,0.15)' },
+    ORGANIZATION: { color: '#14b8a6', bg: 'rgba(20,184,166,0.15)' },
+    LOCATION: { color: '#38bdf8', bg: 'rgba(56,189,248,0.15)' },
     NAME:     { color: '#ec4899', bg: 'rgba(236,72,153,0.15)' },
     USERNAME: { color: '#8b5cf6', bg: 'rgba(139,92,246,0.15)' },
 };

@@ -70,14 +70,18 @@ Hàm public:
 Phát hiện entity phụ thuộc ngữ cảnh:
 
 - `NAME`
+- `ORGANIZATION`
+- `LOCATION`
 - `USERNAME`
 - `ADDRESS`
 
-NAME dùng trigger mạnh và scoring theo câu. USERNAME dùng keyword như `username`, `handle`, `account`. ADDRESS ưu tiên regex số nhà + loại đường và có fallback bằng keyword địa chỉ.
+NAME dùng trigger mạnh và scoring theo câu. ORGANIZATION và LOCATION dùng proper-noun candidates với scoring theo suffix/trigger; LOCATION có priority thấp hơn ADDRESS khi overlap. USERNAME dùng keyword như `username`, `handle`, `account`. ADDRESS ưu tiên regex số nhà + loại đường và có fallback bằng keyword địa chỉ.
 
 Hàm public:
 
 - `detect_name`
+- `detect_organization`
+- `detect_location`
 - `detect_username`
 - `detect_address`
 - `detect_by_context`
@@ -89,7 +93,7 @@ Gộp output từ detector và loại overlap. Đây là module test chính củ
 Priority:
 
 ```text
-EMAIL > URL > PHONE > ADDRESS > NAME > USERNAME
+EMAIL > URL > PHONE > ADDRESS > ORGANIZATION > LOCATION > NAME > USERNAME
 ```
 
 Hàm public:

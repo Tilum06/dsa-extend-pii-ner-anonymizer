@@ -1,4 +1,4 @@
-"""Context-based detectors for NAME, USERNAME, and ADDRESS."""
+"""Context-based detectors for NAME, ORGANIZATION, LOCATION, USERNAME, and ADDRESS."""
 
 from __future__ import annotations
 
@@ -31,6 +31,16 @@ class Candidate(TypedDict):
     end: int
 
 
+class ScoredCandidate(TypedDict):
+    """Candidate plus final tag and score after multi-label scoring."""
+
+    type: str
+    text: str
+    start: int
+    end: int
+    score: int
+
+
 class DetectorContext(TypedDict):
     """Shared preprocessing context used by all context detectors."""
 
@@ -55,6 +65,37 @@ ADDRESS_TRIGGERS = {
     "st.",
     "rd.",
     "ave.",
+}
+ORG_TRIGGERS = {
+    "company",
+    "organization",
+    "organisation",
+    "employer",
+    "work at",
+    "work for",
+    "works at",
+    "works for",
+    "worked at",
+    "worked for",
+    "joined",
+    "founded",
+    "employed by",
+}
+LOCATION_TRIGGERS = {
+    "location",
+    "located at",
+    "located in",
+    "city",
+    "district",
+    "province",
+    "state",
+    "country",
+    "from",
+    "in",
+    "at",
+    "near",
+    "visited",
+    "visit",
 }
 
 _WEAK_USERNAME_TRIGGERS = {"account", "handle"}
@@ -333,6 +374,138 @@ _ORG_PLACE_SUFFIXES = {
     "bank",
     "exchange",
 }
+
+_ORG_SUFFIXES = {
+    "company",
+    "corporation",
+    "corp",
+    "incorporated",
+    "inc",
+    "limited",
+    "ltd",
+    "llc",
+    "plc",
+    "group",
+    "holdings",
+    "ventures",
+    "enterprise",
+    "enterprises",
+    "associates",
+    "partners",
+    "partnership",
+    "agency",
+    "bureau",
+    "firm",
+    "studio",
+    "studios",
+    "lab",
+    "labs",
+    "solutions",
+    "services",
+    "systems",
+    "technologies",
+    "tech",
+    "organization",
+    "organisation",
+    "foundation",
+    "institute",
+    "institution",
+    "association",
+    "society",
+    "committee",
+    "commission",
+    "council",
+    "department",
+    "division",
+    "branch",
+    "office",
+    "ministry",
+    "authority",
+    "board",
+    "federation",
+    "union",
+    "network",
+    "alliance",
+    "center",
+    "centre",
+    "clinic",
+    "hospital",
+    "university",
+    "college",
+    "school",
+    "academy",
+    "polytechnic",
+    "faculty",
+    "bank",
+    "exchange",
+}
+
+_LOCATION_SUFFIXES = {
+    "city",
+    "town",
+    "village",
+    "district",
+    "province",
+    "state",
+    "county",
+    "country",
+    "region",
+    "downtown",
+    "neighborhood",
+    "neighbourhood",
+    "street",
+    "road",
+    "avenue",
+    "boulevard",
+    "drive",
+    "lane",
+    "court",
+    "place",
+    "terrace",
+    "park",
+    "garden",
+    "gardens",
+    "airport",
+    "station",
+    "terminal",
+    "port",
+    "harbor",
+    "market",
+    "mall",
+    "plaza",
+    "tower",
+    "towers",
+    "building",
+    "complex",
+    "stadium",
+    "arena",
+    "theater",
+    "theatre",
+    "cinema",
+    "gallery",
+    "museum",
+    "library",
+    "campus",
+    "hotel",
+    "motel",
+    "resort",
+    "hostel",
+    "inn",
+    "restaurant",
+    "cafe",
+    "bar",
+    "pub",
+    "club",
+    "lounge",
+    "store",
+    "shop",
+    "outlet",
+    "warehouse",
+}
+
+_PROPER_NOUN_CONNECTORS = {"of", "the", "and", "&"}
+_ENTITY_SCORE_THRESHOLDS = {"NAME": 0, "ORGANIZATION": 3, "LOCATION": 3}
+_ENTITY_SCORE_TIEBREAK = {"ORGANIZATION": 0, "LOCATION": 1, "NAME": 2}
 
 # Từ thường đứng cuối label header (e.g. "Contact Information:", "Personal Details:")
 # Token này viết hoa nhưng KHÔNG phải tên người — loại khỏi candidate group
@@ -843,108 +1016,98 @@ def _has_inline_name_bio_suffix(raw: str) -> bool:
     return _INLINE_NAME_BIO_SUFFIX_RE.search(body) is not None
 
 
-def _extract_name_candidates(sentence: Sentence) -> list[Candidate]:
-    """Scan sentences for consecutive title-cased token groups (1–4 tokens).
+def _is_proper_noun_token(clean: str) -> bool:
+    """Return True for title-cased tokens that can belong to a proper noun."""
+    return (
+        bool(clean)
+        and clean[0].isupper()
+        and not any(c.isdigit() for c in clean)
+        and not _SPECIAL_CHARS_RE.search(clean)
+        and clean.lower()
+        not in (
+            _NAME_STOPWORDS
+            | _FIRST_PERSON
+            | _THIRD_PERSON
+            | _POSSIBLE_SENTENCE_STARTERS
+            | _LABEL_HEADER_WORDS
+            | _TITLE_PREFIXES
+            | _JOB_TITLE_STOPWORDS
+        )
+    )
 
-    Rules:
-    - Strip leading title prefixes (Dr., Mr., etc.) and "As"
-    - Discard tokens with special characters
-    - Discard groups where previous token was a pure number (→ likely address)
-    - Discard groups starting with a digit
-    - Minimum 1 token to be a valid candidate
+
+def _extract_entity_candidates(
+    sentence: Sentence,
+    max_tokens: int = 6,
+    allow_connectors: bool = True,
+) -> list[Candidate]:
+    """Scan a sentence for proper-noun spans used by entity scoring.
+
+    This shared candidate extractor keeps suffixes such as "Corporation",
+    "City", or "Street" so the final scoring step can decide whether the span
+    is a NAME, ORGANIZATION, or LOCATION.
     """
     candidates: list[Candidate] = []
-
     sentence_text, sent_offset = sentence["sentence"], sentence["start"]
     token_matches = list(re.finditer(r"\S+", sentence_text))
     i = 0
+
     while i < len(token_matches):
         token_match = token_matches[i]
-        token = token_match.group()
-        if _has_inline_name_bio_suffix(token):
+        raw = token_match.group()
+        if _has_inline_name_bio_suffix(raw):
             i += 1
             continue
-        clean_token, _, _ = _clean_name_token(token)
-
-        # Check for title prefix
-        if clean_token.lower() in _TITLE_PREFIXES or (
-            clean_token.lower() == "as" and i + 1 < len(token_matches)
-        ):
+        clean, clean_start, clean_end = _clean_name_token(raw)
+        if not _is_proper_noun_token(clean):
             i += 1
             continue
 
-        prev_clean = _clean_name_token(token_matches[i - 1].group())[0] if i > 0 else ""
+        start_idx = i
+        candidate_tokens = [clean]
+        candidate_start = sent_offset + token_match.start() + clean_start
+        candidate_end = sent_offset + token_match.start() + clean_end
+        i += 1
 
-        # Check if token is a valid name token
-        if (
-            clean_token
-            and clean_token[0].isupper()
-            and not any(c.isdigit() for c in clean_token)
-            and not _SPECIAL_CHARS_RE.search(clean_token)
-            and not prev_clean.isdigit()
-        ):
-            if (
-                clean_token.lower()
-                in _NAME_STOPWORDS
-                | _FIRST_PERSON
-                | _THIRD_PERSON
-                | _POSSIBLE_SENTENCE_STARTERS
-            ):
+        while i < len(token_matches) and len(candidate_tokens) < max_tokens:
+            current_match = token_matches[i]
+            current_raw = current_match.group()
+            if _has_inline_name_bio_suffix(current_raw):
+                break
+            current_clean, current_start, current_end = _clean_name_token(current_raw)
+            current_lower = current_clean.lower()
+
+            if _is_proper_noun_token(current_clean):
+                candidate_tokens.append(current_clean)
+                candidate_end = sent_offset + current_match.start() + current_end
                 i += 1
                 continue
-            # Potential name token found, collect consecutive title-cased tokens
-            start_idx = i
-            name_tokens: list[str] = []
-            name_start: int | None = None
-            name_end: int | None = None
-
-            while i < len(token_matches) and len(name_tokens) < 4:
-                current_match = token_matches[i]
-                raw = current_match.group()
-                if _has_inline_name_bio_suffix(raw):
-                    break
-                clean, clean_start, clean_end = _clean_name_token(raw)
-                lower_clean = clean.lower()
-
-                if not (
-                    clean
-                    and clean[0].isupper()
-                    and not any(c.isdigit() for c in clean)
-                    and not _SPECIAL_CHARS_RE.search(clean)
-                ):
-                    break
-                if lower_clean in (
-                    _NAME_STOPWORDS
-                    | _FIRST_PERSON
-                    | _THIRD_PERSON
-                    | _JOB_TITLE_STOPWORDS
-                    | _LABEL_HEADER_WORDS
-                ):
-                    break
-
-                if name_start is None:
-                    name_start = sent_offset + current_match.start() + clean_start
-                name_end = sent_offset + current_match.start() + clean_end
-                name_tokens.append(clean)
-                i += 1
 
             if (
-                len(name_tokens) >= 1
-                and name_start is not None
-                and name_end is not None
-                and name_tokens[-1].lower() not in _ORG_PLACE_SUFFIXES
+                allow_connectors
+                and current_lower in _PROPER_NOUN_CONNECTORS
+                and i + 1 < len(token_matches)
             ):
-                candidates.append(
-                    {
-                        "text": " ".join(name_tokens),
-                        "start": name_start,
-                        "end": name_end,
-                    }
-                )
+                next_raw = token_matches[i + 1].group()
+                next_clean, _, _ = _clean_name_token(next_raw)
+                if _is_proper_noun_token(next_clean):
+                    candidate_tokens.append(current_clean)
+                    candidate_end = sent_offset + current_match.start() + current_end
+                    i += 1
+                    continue
 
-            if i == start_idx:
-                i += 1
-        else:
+            break
+
+        if candidate_tokens:
+            candidates.append(
+                {
+                    "text": " ".join(candidate_tokens),
+                    "start": candidate_start,
+                    "end": candidate_end,
+                }
+            )
+
+        if i == start_idx:
             i += 1
 
     return candidates
@@ -964,10 +1127,11 @@ def _has_job_in_sentence(sentence: str) -> bool:
 
 
 def _score_candidate(name: str, sentence: Sentence) -> tuple[int, bool]:
-    """Score a name candidate in its sentence context.
+    """Score a PERSON NAME candidate in its sentence context.
 
     Returns (score, is_definitive).
-    is_definitive=True → caller should break and return this candidate immediately.
+    is_definitive=True means the NAME score should dominate the final
+    NAME/ORGANIZATION/LOCATION decision for the same span.
     """
     score = 0
     sentence_text = sentence["sentence"]
@@ -1037,80 +1201,97 @@ def _score_candidate(name: str, sentence: Sentence) -> tuple[int, bool]:
     return score, False
 
 
-# ---------------------------------------------------------------------------
-# Public detectors
-# ---------------------------------------------------------------------------
+def _candidate_window(sentence_text: str, candidate: Candidate, sent_start: int) -> str:
+    """Return nearby context around a sentence-relative candidate span."""
+    rel_start = max(0, candidate["start"] - sent_start)
+    rel_end = max(rel_start, candidate["end"] - sent_start)
+    return sentence_text[max(0, rel_start - 40) : min(len(sentence_text), rel_end + 40)]
 
 
-def _make_entity(entity_type: str, text: str, start: int, end: int) -> dict[str, Any]:
-    return {"type": entity_type, "text": text, "start": start, "end": end}
+def _score_organization_candidate(candidate: Candidate, sentence: Sentence) -> int:
+    """Score a proper-noun candidate as ORGANIZATION."""
+    score = 0
+    text = candidate["text"]
+    words = [w.lower().rstrip(".") for w in text.split()]
+    sentence_text = sentence["sentence"]
+    sent_lower = sentence_text.lower()
+    window = _candidate_window(sentence_text, candidate, sentence["start"]).lower()
+
+    if words and words[-1] in _ORG_SUFFIXES:
+        score += 8
+    if any(w in _ORG_SUFFIXES for w in words):
+        score += 3
+    if any(trigger in sent_lower for trigger in ORG_TRIGGERS):
+        score += 2
+    if re.search(
+        r"\b(?:at|for|by|from|joined|founded)\s+" + re.escape(text) + r"\b",
+        sentence_text,
+        re.IGNORECASE,
+    ):
+        score += 4
+    if re.search(
+        re.escape(text)
+        + r"\s+(?:hired|employed|announced|released|opened|launched|acquired)\b",
+        sentence_text,
+        re.IGNORECASE,
+    ):
+        score += 4
+    if any(trigger in window for trigger in {"company", "employer", "organization"}):
+        score += 2
+    if words and words[-1] in _LOCATION_SUFFIXES:
+        score -= 4
+
+    return score
 
 
-def _entity_span(entity: dict[str, Any]) -> tuple[int, int]:
-    return entity["start"], entity["end"]
+def _score_location_candidate(candidate: Candidate, sentence: Sentence) -> int:
+    """Score a proper-noun candidate as LOCATION.
+
+    LOCATION is intentionally weaker than ADDRESS in overlap resolution. It
+    catches place-like spans such as cities, districts, and named facilities
+    when a full street address is not available.
+    """
+    score = 0
+    text = candidate["text"]
+    words = [w.lower().rstrip(".") for w in text.split()]
+    sentence_text = sentence["sentence"]
+    sent_lower = sentence_text.lower()
+    window = _candidate_window(sentence_text, candidate, sentence["start"]).lower()
+
+    if words and words[-1] in _LOCATION_SUFFIXES:
+        score += 8
+    if any(w in _LOCATION_SUFFIXES for w in words):
+        score += 3
+    if any(trigger in sent_lower for trigger in LOCATION_TRIGGERS):
+        score += 1
+    if re.search(
+        r"\b(?:in|at|from|near|to|around|inside|outside)\s+" + re.escape(text) + r"\b",
+        sentence_text,
+        re.IGNORECASE,
+    ):
+        score += 4
+    if re.search(
+        r"\b(?:located|lives?|resides?|visited|visit)\s+(?:in|at|near|from)?\s*"
+        + re.escape(text)
+        + r"\b",
+        sentence_text,
+        re.IGNORECASE,
+    ):
+        score += 4
+    if any(trigger in window for trigger in {"city", "district", "province", "state"}):
+        score += 2
+    if words and words[-1] in _ORG_SUFFIXES:
+        score -= 4
+
+    return score
 
 
-def _overlaps(start: int, end: int, other_start: int, other_end: int) -> bool:
-    return start < other_end and end > other_start
-
-
-def _overlaps_any_entity(entity: dict[str, Any], others: list[dict[str, Any]]) -> bool:
-    start, end = _entity_span(entity)
-    return any(_overlaps(start, end, other["start"], other["end"]) for other in others)
-
-
-
-def _public_entity(entity: dict[str, Any]) -> Entity:
-    return {
-        "type": entity["type"],
-        "text": entity["text"],
-        "start": entity["start"],
-        "end": entity["end"],
-    }
-
-
-def _resolve_entities(
-    entities: list[dict[str, Any]],
-    excluded_entities: list[dict[str, Any]] | None = None,
-) -> list[Entity]:
-    """Resolve duplicates and overlaps across detector outputs."""
-    excluded = excluded_entities or []
-    priority = {"ADDRESS": 0, "USERNAME": 1, "NAME": 2}
-    sorted_entities = sorted(
-        entities,
-        key=lambda e: (
-            priority.get(e["type"], 99),
-            -int(e.get("_score", 0)),
-            e["start"],
-            -(e["end"] - e["start"]),
-        ),
-    )
-
-    kept: list[dict[str, Any]] = []
-    seen: set[tuple[str, int, int]] = set()
-    for entity in sorted_entities:
-        key = (entity["type"], entity["start"], entity["end"])
-        if key in seen:
-            continue
-        if _overlaps_any_entity(entity, excluded):
-            continue
-        if _overlaps_any_entity(entity, kept):
-            continue
-        seen.add(key)
-        kept.append(entity)
-
-    kept.sort(key=lambda e: (e["start"], e["end"]))
-    return [_public_entity(entity) for entity in kept]
-
-
-def _detect_name_context(ctx: DetectorContext) -> list[dict[str, Any]]:
-    """Detect NAME spans using shared detector context."""
+def _extract_strong_name_candidates(ctx: DetectorContext) -> dict[tuple[int, int], int]:
+    """Return NAME candidate spans from strong labels/triggers with fixed score."""
     text = ctx["text"]
     lower = ctx["lower"]
-    entities: list[dict[str, Any]] = []
-    seen_spans: set[tuple[int, int]] = set()
+    strong_spans: dict[tuple[int, int], int] = {}
 
-    # --- Fast path: strong triggers ---
     for trigger in NAME_TRIGGERS | _LABEL_TRIGGERS:
         search_start = 0
         while True:
@@ -1148,35 +1329,191 @@ def _detect_name_context(ctx: DetectorContext) -> list[dict[str, Any]]:
 
             if name_tokens and name_start is not None:
                 name_text = " ".join(name_tokens)
-                span = (name_start, name_start + len(name_text))
-                if span not in seen_spans:
-                    seen_spans.add(span)
-                    entity = _make_entity("NAME", name_text, span[0], span[1])
-                    entity["_score"] = 100  # type: ignore[index]
-                    entities.append(entity)
+                strong_spans[(name_start, name_start + len(name_text))] = 100
+
             search_start = trigger_pos + len(trigger)
 
-    # --- Scoring path ---
-    for sent in ctx["sentences"]:
-        for cand in _extract_name_candidates(sent):
-            cand_text = cand["text"]
-            cand_start = cand["start"]
-            cand_end = cand["end"]
-            score, definitive = _score_candidate(cand_text, sent)
-            entity = _make_entity("NAME", cand_text, cand_start, cand_end)
-            entity["_score"] = 100 if definitive else score  # type: ignore[index]
+    return strong_spans
 
-            if definitive:
-                entities.insert(0, entity)
-            else:
-                entities.append(entity)
+
+def _score_entity_candidate(
+    candidate: Candidate,
+    sentence: Sentence,
+    strong_name_scores: dict[tuple[int, int], int],
+) -> ScoredCandidate | None:
+    """Score NAME/ORGANIZATION/LOCATION and choose the final tag for a span."""
+    span = (candidate["start"], candidate["end"])
+    name_score, definitive_name = _score_candidate(candidate["text"], sentence)
+    if span in strong_name_scores:
+        name_score = max(name_score, strong_name_scores[span])
+        definitive_name = True
+    if definitive_name:
+        name_score = max(name_score, 100)
+
+    scores = {
+        "NAME": name_score,
+        "ORGANIZATION": _score_organization_candidate(candidate, sentence),
+        "LOCATION": _score_location_candidate(candidate, sentence),
+    }
+    eligible = [
+        (entity_type, score)
+        for entity_type, score in scores.items()
+        if score >= _ENTITY_SCORE_THRESHOLDS[entity_type]
+    ]
+    if not eligible:
+        return None
+
+    entity_type, score = min(
+        eligible,
+        key=lambda item: (-item[1], _ENTITY_SCORE_TIEBREAK[item[0]]),
+    )
+    return {
+        "type": entity_type,
+        "text": candidate["text"],
+        "start": candidate["start"],
+        "end": candidate["end"],
+        "score": score,
+    }
+
+
+def _detect_scored_entity_context(
+    ctx: DetectorContext,
+    entity_types: set[str] | None = None,
+) -> list[dict[str, Any]]:
+    """Detect NAME/ORGANIZATION/LOCATION using one shared scoring pipeline."""
+    allowed_types = entity_types or {"NAME", "ORGANIZATION", "LOCATION"}
+    strong_name_scores = _extract_strong_name_candidates(ctx)
+    best_by_span: dict[tuple[int, int], ScoredCandidate] = {}
+
+    for sent in ctx["sentences"]:
+        for cand in _extract_entity_candidates(sent):
+            scored = _score_entity_candidate(cand, sent, strong_name_scores)
+            if scored is None or scored["type"] not in allowed_types:
+                continue
+            span = (scored["start"], scored["end"])
+            existing = best_by_span.get(span)
+            if existing is None or (
+                scored["score"],
+                -_ENTITY_SCORE_TIEBREAK[scored["type"]],
+            ) > (
+                existing["score"],
+                -_ENTITY_SCORE_TIEBREAK[existing["type"]],
+            ):
+                best_by_span[span] = scored
+
+    entities: list[dict[str, Any]] = []
+    for scored in best_by_span.values():
+        entity = _make_entity(
+            scored["type"],
+            scored["text"],
+            scored["start"],
+            scored["end"],
+        )
+        entity["_score"] = scored["score"]  # type: ignore[index]
+        entities.append(entity)
 
     return entities
+
+
+# ---------------------------------------------------------------------------
+# Public detectors
+# ---------------------------------------------------------------------------
+
+
+def _make_entity(entity_type: str, text: str, start: int, end: int) -> dict[str, Any]:
+    return {"type": entity_type, "text": text, "start": start, "end": end}
+
+
+def _entity_span(entity: dict[str, Any]) -> tuple[int, int]:
+    return entity["start"], entity["end"]
+
+
+def _overlaps(start: int, end: int, other_start: int, other_end: int) -> bool:
+    return start < other_end and end > other_start
+
+
+def _overlaps_any_entity(entity: dict[str, Any], others: list[dict[str, Any]]) -> bool:
+    start, end = _entity_span(entity)
+    return any(_overlaps(start, end, other["start"], other["end"]) for other in others)
+
+
+def _public_entity(entity: dict[str, Any]) -> Entity:
+    return {
+        "type": entity["type"],
+        "text": entity["text"],
+        "start": entity["start"],
+        "end": entity["end"],
+    }
+
+
+def _resolve_entities(
+    entities: list[dict[str, Any]],
+    excluded_entities: list[dict[str, Any]] | None = None,
+) -> list[Entity]:
+    """Resolve duplicates and overlaps across detector outputs."""
+    excluded = excluded_entities or []
+    priority = {
+        "ADDRESS": 0,
+        "ORGANIZATION": 1,
+        "LOCATION": 2,
+        "USERNAME": 3,
+        "NAME": 4,
+    }
+    sorted_entities = sorted(
+        entities,
+        key=lambda e: (
+            priority.get(e["type"], 99),
+            -int(e.get("_score", 0)),
+            e["start"],
+            -(e["end"] - e["start"]),
+        ),
+    )
+
+    kept: list[dict[str, Any]] = []
+    seen: set[tuple[str, int, int]] = set()
+    for entity in sorted_entities:
+        key = (entity["type"], entity["start"], entity["end"])
+        if key in seen:
+            continue
+        if _overlaps_any_entity(entity, excluded):
+            continue
+        if _overlaps_any_entity(entity, kept):
+            continue
+        seen.add(key)
+        kept.append(entity)
+
+    kept.sort(key=lambda e: (e["start"], e["end"]))
+    return [_public_entity(entity) for entity in kept]
+
+
+def _detect_name_context(ctx: DetectorContext) -> list[dict[str, Any]]:
+    """Detect NAME spans using the shared scored-entity pipeline."""
+    return _detect_scored_entity_context(ctx, {"NAME"})
 
 
 def detect_name(text: str) -> list[Entity]:
     """Detect NAME spans from raw text."""
     return _resolve_entities(_detect_name_context(_build_context(text)))
+
+
+def _detect_organization_context(ctx: DetectorContext) -> list[dict[str, Any]]:
+    """Detect ORGANIZATION spans using the shared scored-entity pipeline."""
+    return _detect_scored_entity_context(ctx, {"ORGANIZATION"})
+
+
+def detect_organization(text: str) -> list[Entity]:
+    """Detect ORGANIZATION spans from raw text."""
+    return _resolve_entities(_detect_organization_context(_build_context(text)))
+
+
+def _detect_location_context(ctx: DetectorContext) -> list[dict[str, Any]]:
+    """Detect LOCATION spans using the shared scored-entity pipeline."""
+    return _detect_scored_entity_context(ctx, {"LOCATION"})
+
+
+def detect_location(text: str) -> list[Entity]:
+    """Detect LOCATION spans from raw text."""
+    return _resolve_entities(_detect_location_context(_build_context(text)))
 
 
 def _detect_username_context(ctx: DetectorContext) -> list[dict[str, Any]]:
@@ -1367,7 +1704,7 @@ def detect_by_context(
     """Run all context detectors from raw text and return resolved spans."""
     ctx = _build_context(text)
     entities: list[dict[str, Any]] = []
-    entities.extend(_detect_name_context(ctx))
+    entities.extend(_detect_scored_entity_context(ctx))
     entities.extend(_detect_username_context(ctx))
     entities.extend(_detect_address_context(ctx))
     return _resolve_entities(entities, excluded_entities)
