@@ -1,0 +1,111 @@
+\section{Kiểm thử và đánh giá}
+
+Phần kiểm thử tập trung đánh giá độ chính xác của thuật toán rule-based trên
+tập dữ liệu gốc \path{data/raw/pii_dataset.csv}. Script kiểm thử được đặt tại
+\path{tests/test_rule_based_accuracy.py}. Với mỗi dòng dữ liệu, hệ thống
+lấy trường \texttt{text} làm đầu vào, chạy pipeline phát hiện thực thể hiện tại
+gồm \texttt{regex\_detector}, \texttt{context\_detector} và \texttt{merger}, sau
+đó so sánh kết quả nhận diện với các cột ground truth trong file CSV.
+
+Các loại thực thể được đánh giá trong phần này gồm:
+
+\begin{center}
+    \texttt{NAME}, \texttt{EMAIL}, \texttt{PHONE}, \texttt{URL}
+\end{center}
+
+Trong đó, \texttt{NAME} được so sánh với cột \texttt{name}, \texttt{EMAIL} với
+cột \texttt{email}, \texttt{PHONE} với cột \texttt{phone}, và \texttt{URL} với
+cột \texttt{url}. Đối với số điện thoại, script chuẩn hóa về chuỗi chữ số trước
+khi so sánh nhằm tránh sai lệch do dấu cách, dấu ngoặc hoặc dấu gạch ngang.
+
+\subsection{Các chỉ số đánh giá}
+
+Script in ra các chỉ số sau:
+
+\begin{itemize}[nosep]
+    \item \textbf{Support}: số dòng có giá trị ground truth cho loại thực thể
+          tương ứng.
+    \item \textbf{Correct}: số dòng mà detector tìm được đúng giá trị ground
+          truth trong danh sách dự đoán.
+    \item \textbf{Accuracy}: tỉ lệ \texttt{Correct / Support}. Chỉ số này cho
+          biết trong các dòng có ground truth, hệ thống có tìm được đúng thực
+          thể cần tìm hay không.
+    \item \textbf{Precision}: tỉ lệ \texttt{TP / (TP + FP)}. Chỉ số này cho
+          biết trong các thực thể hệ thống dự đoán ra, bao nhiêu thực thể là
+          đúng.
+    \item \textbf{Recall}: tỉ lệ \texttt{TP / (TP + FN)}, tương đương khả năng
+          tìm lại đúng các thực thể có trong ground truth.
+    \item \textbf{F1}: trung bình điều hòa giữa precision và recall.
+\end{itemize}
+
+Vì mỗi dòng CSV chỉ có một giá trị ground truth cho từng cột như \texttt{name}
+hoặc \texttt{email}, \texttt{Accuracy} trong bảng dưới đây được hiểu là tỉ lệ
+tìm đúng giá trị chính của dòng đó. Chỉ số này khác với \texttt{Precision}: một
+detector có thể tìm đúng tên thật trong dòng văn bản nhưng đồng thời dự đoán dư
+nhiều cụm khác là \texttt{NAME}; khi đó accuracy vẫn cao nhưng precision thấp.
+
+\subsection{Kết quả thực nghiệm}
+
+Kết quả được ghi nhận khi chạy lệnh:
+
+\begin{verbatim}
+python tests/test_rule_based_accuracy.py
+\end{verbatim}
+
+Tổng số dòng được đánh giá là 4434. Kết quả chi tiết được trình bày trong
+Bảng~\ref{tab:rule_based_accuracy}.
+
+\begin{table}[H]
+    \centering
+    \caption{Kết quả đánh giá rule-based detector trên tập \texttt{pii\_dataset.csv}}
+    \label{tab:rule_based_accuracy}
+    \renewcommand{\arraystretch}{1.25}
+    \begin{adjustbox}{max width=\textwidth}
+        \begin{tabular}{lrrrrrrrr}
+            \toprule
+            \textbf{Entity}  & \textbf{Support}   & \textbf{Correct} & \textbf{Accuracy}
+                             & \textbf{Precision} & \textbf{Recall}  & \textbf{F1}
+                             & \textbf{FP}        & \textbf{FN}                                                                       \\
+            \midrule
+            \texttt{NAME}    & 4434               & 3845             & 86.72\%           & 18.39\% & 86.72\% & 30.35\% & 17060 & 589  \\
+            \texttt{EMAIL}   & 4434               & 3825             & 86.27\%           & 95.79\% & 86.27\% & 90.78\% & 168   & 609  \\
+            \texttt{PHONE}   & 4434               & 2383             & 53.74\%           & 99.04\% & 53.74\% & 69.68\% & 23    & 2051 \\
+            \texttt{URL}     & 1322               & 526              & 39.79\%           & 86.23\% & 39.79\% & 54.45\% & 84    & 796  \\
+            \midrule
+            \textbf{Overall} & 14624              & 10579            & 72.34\%           & 37.90\% & 72.34\% & 49.74\% & 17335 & 4045 \\
+            \bottomrule
+        \end{tabular}
+    \end{adjustbox}
+\end{table}
+
+\subsection{Nhận xét}
+
+Kết quả cho thấy nhóm thực thể có cấu trúc rõ ràng như \texttt{EMAIL} đạt hiệu
+quả tốt nhất. Precision của \texttt{EMAIL} đạt 95.79\%, cho thấy phần lớn email
+được detector dự đoán ra là chính xác. Tuy nhiên recall chỉ đạt 86.27\%, nghĩa
+là vẫn còn một số email trong dataset chưa được phát hiện, thường do khác biệt
+format hoặc dấu câu đi kèm trong văn bản.
+
+Đối với \texttt{PHONE}, precision rất cao, đạt 99.04\%, nhưng recall chỉ đạt
+53.74\%. Điều này cho thấy regex số điện thoại khá thận trọng: khi đã nhận diện
+thì thường đúng, nhưng bỏ sót nhiều trường hợp có định dạng đa dạng. Đây là một
+điểm cần cải thiện nếu muốn tăng độ phủ của hệ thống.
+
+\texttt{URL} có precision tương đối cao, đạt 86.23\%, nhưng accuracy và recall
+chỉ đạt 39.79\%. Nguyên nhân chính là dataset có nhiều URL hoặc placeholder URL
+không theo đúng dạng mà regex hiện tại ưu tiên, chẳng hạn các dạng thiếu scheme
+hoặc bị gắn với dấu câu trong câu.
+
+Với \texttt{NAME}, accuracy đạt 86.72\%, nghĩa là hệ thống thường tìm được tên
+chính của dòng dữ liệu. Tuy nhiên precision chỉ đạt 18.39\% do detector theo
+ngữ cảnh còn dự đoán dư nhiều cụm viết hoa không phải tên người. Điều này phản
+ánh đặc thù của rule-based name detection: nếu rule rộng thì recall cao hơn
+nhưng dễ phát sinh false positive; nếu rule chặt hơn thì precision tăng nhưng
+có nguy cơ bỏ sót tên thật.
+
+Nhìn chung, kết quả overall đạt accuracy 72.34\% và F1 49.74\%. Hệ thống
+rule-based hiện tại phù hợp với các thực thể có cấu trúc cố định, đặc biệt là
+\texttt{EMAIL} và các số điện thoại có format rõ ràng. Các thực thể phụ thuộc
+nhiều vào ngữ cảnh hoặc có format đa dạng như \texttt{NAME} và \texttt{URL} cần
+được bổ sung thêm rule, dictionary hoặc cơ chế lọc false positive để cải thiện
+precision và recall.
