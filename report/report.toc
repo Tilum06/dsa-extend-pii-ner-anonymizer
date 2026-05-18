@@ -1,0 +1,20 @@
+\babel@toc {vietnamese}{}\relax 
+\contentsline {section}{T\'om t\'\abreve t n\d \ocircumflex i dung}{i}{section*.1}%
+\contentsline {section}{Mục lục}{ii}{section*.2}%
+\contentsline {section}{Danh sách hình vẽ}{iii}{section*.4}%
+\contentsline {section}{Danh sách bảng}{iv}{section*.6}%
+\contentsline {section}{Danh sách đoạn mã}{v}{section*.8}%
+\contentsline {section}{\numberline {1}Giới thiệu}{1}{section.1}%
+\contentsline {subsection}{\numberline {1.1}Nhận diện tên riêng và địa chỉ (Context Detector)}{2}{subsection.1.1}%
+\contentsline {subsubsection}{\numberline {1.1.1}Nhận diện tên người}{2}{subsubsection.1.1.1}%
+\contentsline {paragraph}{Tiền xử lý --- Tách câu thông minh.}{2}{section*.12}%
+\contentsline {paragraph}{Tầng 1 --- Fast path (Trigger mạnh).}{2}{section*.13}%
+\contentsline {paragraph}{Tầng 2 --- Scoring path (Chấm điểm ngữ cảnh).}{3}{section*.14}%
+\contentsline {subsubsection}{\numberline {1.1.2}Nhận diện địa chỉ}{7}{subsubsection.1.1.2}%
+\contentsline {paragraph}{Cơ chế 1 --- Regex pattern.}{7}{section*.16}%
+\contentsline {paragraph}{Cơ chế 2 --- Trigger keyword (fallback).}{7}{section*.17}%
+\contentsline {subsection}{\numberline {1.2}Hợp nhất thực thể (Merger)}{8}{subsection.1.2}%
+\contentsline {subsubsection}{\numberline {1.2.1}Vấn đề overlap}{9}{subsubsection.1.2.1}%
+\contentsline {subsubsection}{\numberline {1.2.2}Hệ thống ưu tiên}{9}{subsubsection.1.2.2}%
+\contentsline {subsubsection}{\numberline {1.2.3}Thuật toán Greedy Priority-First}{9}{subsubsection.1.2.3}%
+\contentsline {subsubsection}{\numberline {1.2.4}Minh họa trường hợp overlap}{10}{subsubsection.1.2.4}%
