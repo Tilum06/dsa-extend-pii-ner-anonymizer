@@ -1042,7 +1042,7 @@ def _score_candidate(name: str, sentence: Sentence) -> tuple[int, bool]:
 # ---------------------------------------------------------------------------
 
 
-def _make_entity(entity_type: str, text: str, start: int, end: int) -> Entity:
+def _make_entity(entity_type: str, text: str, start: int, end: int) -> dict[str, Any]:
     return {"type": entity_type, "text": text, "start": start, "end": end}
 
 
@@ -1057,6 +1057,7 @@ def _overlaps(start: int, end: int, other_start: int, other_end: int) -> bool:
 def _overlaps_any_entity(entity: dict[str, Any], others: list[dict[str, Any]]) -> bool:
     start, end = _entity_span(entity)
     return any(_overlaps(start, end, other["start"], other["end"]) for other in others)
+
 
 
 def _public_entity(entity: dict[str, Any]) -> Entity:
@@ -1151,7 +1152,7 @@ def _detect_name_context(ctx: DetectorContext) -> list[dict[str, Any]]:
                 if span not in seen_spans:
                     seen_spans.add(span)
                     entity = _make_entity("NAME", name_text, span[0], span[1])
-                    entity["_score"] = 100
+                    entity["_score"] = 100  # type: ignore[index]
                     entities.append(entity)
             search_start = trigger_pos + len(trigger)
 
@@ -1163,7 +1164,7 @@ def _detect_name_context(ctx: DetectorContext) -> list[dict[str, Any]]:
             cand_end = cand["end"]
             score, definitive = _score_candidate(cand_text, sent)
             entity = _make_entity("NAME", cand_text, cand_start, cand_end)
-            entity["_score"] = 100 if definitive else score
+            entity["_score"] = 100 if definitive else score  # type: ignore[index]
 
             if definitive:
                 entities.insert(0, entity)
@@ -1231,7 +1232,7 @@ def _detect_username_context(ctx: DetectorContext) -> list[dict[str, Any]]:
                 token = m.group().rstrip(".,;:!?")
                 if _USERNAME_RE.fullmatch(token):
                     entity = _make_entity("USERNAME", token, after, after + len(token))
-                    entity["_score"] = 10
+                    entity["_score"] = 10  # type: ignore[index]
                     entities.append(entity)
 
             search_start = trigger_pos + len(trigger)
@@ -1262,7 +1263,7 @@ def _detect_address_context(ctx: DetectorContext) -> list[dict[str, Any]]:
         entity = _make_entity(
             "ADDRESS", addr_text, m.start(), m.start() + len(addr_text)
         )
-        entity["_score"] = 20
+        entity["_score"] = 20  # type: ignore[index]
         entities.append(entity)
 
     # --- Fallback: trigger keywords for addresses without street type ---
@@ -1313,7 +1314,7 @@ def _detect_address_context(ctx: DetectorContext) -> list[dict[str, Any]]:
                         actual_start,
                         actual_start + len(addr_text),
                     )
-                    entity["_score"] = 5
+                    entity["_score"] = 5  # type: ignore[index]
                     entities.append(entity)
 
             search_start = trigger_pos + len(trigger)
