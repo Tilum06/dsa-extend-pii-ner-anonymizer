@@ -29,8 +29,8 @@
 % BẮT BUỘC cho pdfLaTeX để đọc file UTF8
 \RequirePackage[utf8]{inputenc}
 
-% BẮT BUỘC cho pdfLaTeX để xử lý font T1 (copy/paste đúng)
-\RequirePackage[T1]{fontenc}
+% BẮT BUỘC cho pdfLaTeX để xử lý tiếng Việt đúng dấu
+\RequirePackage[T5]{fontenc}
 \RequirePackage{textcomp} % Hỗ trợ thêm ký tự
 
 % Ngôn ngữ tiếng Việt
@@ -227,8 +227,11 @@ literate=
         \end{tabular}
 
         \vfill
-        Advisor: \@advisor\\
-        Group ID and memebers: \@stuname\\
+        \mdseries
+        \begin{tabular}{rll}
+            GVHD:                & \@advisor \\
+            Sinh viên thực hiện: & \@stuname
+        \end{tabular}
         \vfill
         \MakeUppercase{\@reportplace, \@reporttime}
     \end{center}
@@ -268,11 +271,11 @@ literate=
 }
 
 % 2. Định nghĩa lại lệnh in danh sách
-% (Đã comment out \addcontentsline để XÓA KHỎI MỤC LỤC)
+% Thêm vào mục lục để khối đầu tài liệu được liệt kê đầy đủ
 \renewcommand{\listoffigures}{%
     % \cleardoublepage
     \phantomsection
-    % \addcontentsline{toc}{section}{\listfigurename} % <-- ĐÃ XÓA
+    \addcontentsline{toc}{section}{\listfigurename}
     \section*{\listfigurename}
     \@starttoc{lof}
 }
@@ -280,7 +283,7 @@ literate=
 \renewcommand{\listoftables}{%
     % \cleardoublepage
     \phantomsection
-    % \addcontentsline{toc}{section}{\listtablename} % <-- ĐÃ XÓA
+    \addcontentsline{toc}{section}{\listtablename}
     \section*{\listtablename}
     \@starttoc{lot}
 }
@@ -288,7 +291,7 @@ literate=
 \renewcommand{\lstlistoflistings}{%
     % \cleardoublepage
     \phantomsection
-    % \addcontentsline{toc}{section}{\lstlistlistingname} % <-- ĐÃ XÓA
+    \addcontentsline{toc}{section}{\lstlistlistingname}
     \section*{\lstlistlistingname}
     \@starttoc{lol}
 }
@@ -297,6 +300,7 @@ literate=
 \renewcommand{\tableofcontents}{%
     % \cleardoublepage
     \phantomsection
+    \addcontentsline{toc}{section}{\contentsname}
     \section*{\contentsname}
     \@starttoc{toc}
 }

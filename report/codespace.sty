@@ -6,36 +6,46 @@
 
 \RequirePackage{tikz}
 \RequirePackage[framemethod=tikz]{mdframed}
-\RequirePackage{listings,lstautogobble}
-% \RequirePackage{minted,verbatim}
+\RequirePackage{listings,lstautogobble,verbatim}
 
 % Configurations
-\colorlet{codebackground}{magenta!10}
-\definecolor{codebasic}{RGB}{106,106,106}
+\colorlet{codebackground}{black!4}
+\definecolor{codeframe}{RGB}{190,190,190}
+\definecolor{codebasic}{RGB}{62,62,62}
 \definecolor{codeidentifier}{RGB}{0,0,0}
-\definecolor{codecomment}{RGB}{0,136,0}
-\definecolor{codestring}{RGB}{187,68,68}
-\definecolor{codekeyword}{RGB}{170,34,255}
+\definecolor{codecomment}{RGB}{0,120,102}
+\definecolor{codestring}{RGB}{173,92,0}
+\definecolor{codekeyword}{RGB}{0,92,175}
 
 \lstdefinestyle{codeframe}{
     float=H,
-    frame=lines,
+    frame=single,
+    rulecolor=\color{codeframe},
     backgroundcolor=\color{codebackground},
+    framesep=8pt,
+    xleftmargin=1.5em,
+    xrightmargin=0.5em,
+    aboveskip=0.9em,
+    belowskip=0.9em,
 }
 \lstdefinestyle{codestyle}{
-    basicstyle=\color{codebasic}\ttfamily,
+    basicstyle=\small\ttfamily\color{codebasic},
     identifierstyle=\color{codeidentifier},
     commentstyle=\color{codecomment}\itshape,
     stringstyle=\color{codestring},
-    keywordstyle=\color{codekeyword},
+    keywordstyle=\bfseries\color{codekeyword},
     numbers=left,
-    %firstnumber=1,
-    numbersep=2pt,
-    numberstyle=\tiny,
+    numbersep=8pt,
+    numberstyle=\scriptsize\color{codebasic!60},
     autogobble=true,
     breaklines=true,
+    breakatwhitespace=true,
+    columns=fullflexible,
+    keepspaces=true,
     showstringspaces=false,
-    tabsize=2
+    showtabs=false,
+    tabsize=4,
+    captionpos=b,
 }
 \lstset{
     style=codeframe,

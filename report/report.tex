@@ -1,5 +1,5 @@
 % Speed-up compilation
-\documentclass[twoside,final]{hcmut-report}
+\documentclass[oneside,final]{hcmut-report-vi}
 \usepackage{codespace}
 
 % Draft watermark
@@ -16,7 +16,6 @@
 \usepackage{enumitem}
 
 % Graphics
-\usepackage{graphicx}
 \usepackage{caption,float}
 
 % Add options for figures, like max width, framing, etc.
@@ -29,53 +28,110 @@
 % FOR DEMONSTRATION PURPOSES, REMOVE IN PRODUCTION
 \usepackage{mwe}
 
-
 \usepackage{tikz}
-
-
+\usetikzlibrary{positioning, arrows.meta, shadows, shapes.geometric}
 % Sub-preambles
 % https://github.com/MartinScharrer/standalone
-
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{booktabs}
 % Configurations
-\coursename{Cấu trúc dữ liệu và giải thuật}
-\reporttype{Đề tài mở rộng}
-\title{} 
-\advisor{& Vương Bá Thịnh &}
-\stuname{%
-  & Nguyễn Phúc Vĩnh & 2414001 \\
-  & Trần Văn Minh Triết & 2413603 \\
-  & Trần Đình Ý & 2414100 \\
-  & Nguyễn Đình Minh & 2412079 \\
-}
+\coursename{DSA-Extended}
+\reporttype{Báo cáo bài tập lớn (Mỏ rộng)}
+\title{PII-NER-ANONYMIZER}
+\advisor{Vương Bá Thịnh}
+\stuname{Trần Đình Ý & 2414100\\
+         & Trần Văn Minh Triết & 2413603\\
+         & Nguyễn Phúc Vĩnh & 2414001\\
+         & Nguyễn Đình Minh & 2412079}
 
 % ===================================================
 % NỘI DUNG CHÍNH
 % ===================================================
 \begin{document}
 
+% Trang bìa: không đánh số trang
 \coverpage
+\thispagestyle{empty}
+\clearpage
 
 \AtBeginDocument{\counterwithin{lstlisting}{section}}
 
-% Tạo mục lục và các danh sách
-
-\pagestyle{plain}          
+% ===================================================
+% PHẦN ĐẦU: đánh số La Mã i, ii, iii, ...
+% Theo quy định: các phần trước nội dung chính dùng i, ii, ...
+% ===================================================
+\pagestyle{plain}
 \pagenumbering{roman}
+\setcounter{page}{1}
+
+\input{chapters/abstract}
+\clearpage
 
 \tableofcontents
+\clearpage
+
 \listoffigures
+\clearpage
+
 \listoftables
+\clearpage
+
 \lstlistoflistings
+\clearpage
+
+% ===================================================
+% PHÂN CÔNG NHIỆM VỤ: vẫn thuộc phần đầu, dùng số La Mã
+% ===================================================
+\subsection*{\centering PHÂN CÔNG NHIỆM VỤ VÀ KẾT QUẢ CỦA TỪNG THÀNH VIÊN}
+
+\begin{table}[H]
+    \centering
+    \renewcommand{\arraystretch}{1.5}
+    \begin{tabular}{|c|p{3.6cm}|p{2.4cm}|p{6.2cm}|p{1.8cm}|}
+        \hline
+        \textbf{STT} & \centering\textbf{HỌ VÀ TÊN}    & \centering\textbf{MSSV} & \centering\textbf{NHIỆM VỤ} & \centering\arraybackslash\textbf{KẾT QUẢ} \\
+        \hline
+        1
+                     & \centering Trần Văn Minh Triết
+                     & \centering 2413603
+                     & \centering None.
+                     & \centering\arraybackslash 100\%                                                                                                     \\
+        \hline
+        2
+                     & \centering Nguyễn Đình Minh
+                     & \centering 2412079
+                     & \centering None.
+                     & \centering\arraybackslash 100\%                                                                                                     \\
+        \hline
+        3
+                     & \centering Nguyễn Phúc Vĩnh
+                     & \centering 2414001
+                     & \centering None.
+                     & \centering\arraybackslash 100\%                                                                                                     \\
+        \hline
+        4
+                     & \centering Trần Đình Ý
+                     & \centering 2414100
+                     & \centering None.
+                     & \centering\arraybackslash 100\%                                                                                                     \\
+        \hline
+    \end{tabular}
+\end{table}
 
 \clearpage
 
-\pagenumbering{arabic}      % 1, 2, 3, ...
+% ===================================================
+% NỘI DUNG CHÍNH: đánh số Ả Rập từ Chương 1
+% ===================================================
+\pagenumbering{arabic}
 \setcounter{page}{1}
 \pagestyle{fancy}
 
-% Nội dung các chương
+\input{chapters/introduction}
+\clearpage
 
-\input{chapters/intro.tex}
-
+\input{chapters/2.2-2.3}
+\clearpage
 
 \end{document}
