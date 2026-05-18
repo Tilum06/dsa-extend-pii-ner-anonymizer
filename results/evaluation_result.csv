@@ -1,7 +1,7 @@
 Metric,Value
-tp,8055
-fp,31324
-fn,14171
-precision,0.2046
-recall,0.3624
-f1,0.2615
+tp,8290
+fp,30781
+fn,13936
+precision,0.2122
+recall,0.373
+f1,0.2705
