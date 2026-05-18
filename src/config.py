@@ -9,7 +9,6 @@ ENTITY_PRIORITY = [
     "EMAIL",
     "URL",
     "PHONE",
-    "DATE",
     "ADDRESS",
     "ORGANIZATION",
     "LOCATION",
