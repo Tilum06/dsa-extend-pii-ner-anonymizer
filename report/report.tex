@@ -1,0 +1,80 @@
+% Speed-up compilation
+\documentclass[twoside,final]{hcmut-report}
+\usepackage{codespace}
+
+% Draft watermark
+% https://github.com/callegar/LaTeX-draftwatermark
+
+% Encodings
+\usepackage{gensymb,textcomp}
+
+% Better tables
+% Wide tables go to https://tex.stackexchange.com/q/332902
+\usepackage{array,longtable,multicol,multirow,siunitx,tabularx}
+
+% Better enum
+\usepackage{enumitem}
+
+% Graphics
+\usepackage{graphicx}
+\usepackage{caption,float}
+
+% Add options for figures, like max width, framing, etc.
+\usepackage[export]{adjustbox}
+
+% References
+% Use \Cref{} instead of \ref{}
+\usepackage[nameinlink]{cleveref}
+
+% FOR DEMONSTRATION PURPOSES, REMOVE IN PRODUCTION
+\usepackage{mwe}
+
+
+\usepackage{tikz}
+
+
+% Sub-preambles
+% https://github.com/MartinScharrer/standalone
+
+% Configurations
+\coursename{Cấu trúc dữ liệu và giải thuật}
+\reporttype{Đề tài mở rộng}
+\title{} 
+\advisor{& Vương Bá Thịnh &}
+\stuname{%
+  & Nguyễn Phúc Vĩnh & 2414001 \\
+  & Trần Văn Minh Triết & 2413603 \\
+  & Trần Đình Ý & 2414100 \\
+  & Nguyễn Đình Minh & 2412079 \\
+}
+
+% ===================================================
+% NỘI DUNG CHÍNH
+% ===================================================
+\begin{document}
+
+\coverpage
+
+\AtBeginDocument{\counterwithin{lstlisting}{section}}
+
+% Tạo mục lục và các danh sách
+
+\pagestyle{plain}          
+\pagenumbering{roman}
+
+\tableofcontents
+\listoffigures
+\listoftables
+\lstlistoflistings
+
+\clearpage
+
+\pagenumbering{arabic}      % 1, 2, 3, ...
+\setcounter{page}{1}
+\pagestyle{fancy}
+
+% Nội dung các chương
+
+
+
+\end{document}
