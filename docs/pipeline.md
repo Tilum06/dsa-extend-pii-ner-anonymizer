@@ -55,6 +55,7 @@ Phát hiện entity có cấu trúc rõ ràng:
 - `EMAIL`
 - `PHONE`
 - `URL`
+- `DATE`
 
 Module chạy email và URL trước, sau đó chạy phone với exclusion spans để tránh bắt nhầm số bên trong email/URL.
 
@@ -63,6 +64,7 @@ Hàm public:
 - `detect_email`
 - `detect_phone`
 - `detect_url`
+- `detect_date`
 - `detect_regex_entities`
 
 ### `src/context_detector.py`
@@ -93,7 +95,7 @@ Gộp output từ detector và loại overlap. Đây là module test chính củ
 Priority:
 
 ```text
-EMAIL > URL > PHONE > ADDRESS > ORGANIZATION > LOCATION > NAME > USERNAME
+EMAIL > URL > PHONE > DATE > ADDRESS > ORGANIZATION > LOCATION > NAME > USERNAME
 ```
 
 Hàm public:

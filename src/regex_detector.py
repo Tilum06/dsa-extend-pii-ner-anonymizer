@@ -1,4 +1,4 @@
-"""Regex-based detectors for structured PII (EMAIL, PHONE, URL)."""
+"""Regex-based detectors for structured PII (EMAIL, PHONE, URL, DATE)."""
 
 from __future__ import annotations
 
@@ -39,6 +39,78 @@ PHONE_PATTERN = re.compile(
     r")"
     r"(?![a-zA-Z0-9@])"
 )
+
+# ---------------------------------------------------------------------------
+# DATE patterns
+# ---------------------------------------------------------------------------
+# Full and abbreviated English month names for reuse in patterns.
+_MONTHS_FULL = (
+    r"January|February|March|April|May|June"
+    r"|July|August|September|October|November|December"
+)
+_MONTHS_ABBR = (
+    r"Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec"
+)
+_MONTHS_ALL = rf"(?:{_MONTHS_FULL}|{_MONTHS_ABBR})"
+
+DATE_PATTERNS: list[re.Pattern[str]] = [
+    # --- Vietnamese formats ---
+    # ngày DD tháng MM năm YYYY  /  DD tháng MM năm YYYY
+    re.compile(
+        r"(?:ngày\s+)?\d{1,2}\s+tháng\s+\d{1,2}\s+năm\s+\d{4}",
+        re.IGNORECASE,
+    ),
+    # ngày D/M/YYYY  (Vietnamese prefix)
+    re.compile(
+        r"ngày\s+\d{1,2}/\d{1,2}/\d{2,4}",
+        re.IGNORECASE,
+    ),
+    # tháng MM năm YYYY  (Vietnamese month/year)
+    re.compile(
+        r"tháng\s+\d{1,2}\s+năm\s+\d{4}",
+        re.IGNORECASE,
+    ),
+    # năm YYYY  (Vietnamese contextual year)
+    re.compile(
+        r"năm\s+\d{4}",
+        re.IGNORECASE,
+    ),
+
+    # --- English month-name formats ---
+    # January 2, 2024  /  Jan 2, 2024
+    re.compile(
+        rf"{_MONTHS_ALL}\.?\s+\d{{1,2}},?\s+\d{{4}}"
+    ),
+    # 2 January 2024  /  2 Jan 2024
+    re.compile(
+        rf"\d{{1,2}}\s+{_MONTHS_ALL}\.?\s+\d{{4}}"
+    ),
+    # January 2024  /  Jan 2024  (month-year only)
+    re.compile(
+        rf"{_MONTHS_ALL}\.?\s+\d{{4}}"
+    ),
+    # year YYYY  (English contextual year)
+    re.compile(
+        r"year\s+\d{4}",
+        re.IGNORECASE,
+    ),
+
+    # --- ISO / numeric formats ---
+    # YYYY-MM-DD  /  YYYY/MM/DD
+    re.compile(
+        r"(?<!\d)\d{4}[/\-]\d{1,2}[/\-]\d{1,2}(?!\d)"
+    ),
+    # DD/MM/YYYY  DD-MM-YYYY  DD.MM.YYYY  (also 2-digit year)
+    re.compile(
+        r"(?<!\d)\d{1,2}[/\-.]"
+        r"\d{1,2}[/\-.]"
+        r"\d{2,4}(?!\d)"
+    ),
+    # MM/YYYY  (month/year numeric)
+    re.compile(
+        r"(?<!\d)\d{1,2}/\d{4}(?!\d)"
+    ),
+]
 
 # Characters considered trailing punctuation that should be stripped from
 # the end (and sometimes the start) of detected matches.
@@ -82,13 +154,13 @@ def _entity_spans(entities: list[dict[str, Any]]) -> list[tuple[int, int]]:
 
 
 def _resolve_regex_overlaps(entities: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    """Remove overlapping entities using priority EMAIL > URL > PHONE.
+    """Remove overlapping entities using priority EMAIL > URL > PHONE > DATE.
 
     When two entities overlap, the one with higher priority (lower index in
     the priority list) is kept.  Among equal priority, the earlier start wins;
     among equal start, the longer span wins.
     """
-    priority = {"EMAIL": 0, "URL": 1, "PHONE": 2}
+    priority = {"EMAIL": 0, "URL": 1, "PHONE": 2, "DATE": 3}
 
     # Sort by priority (higher priority first), then by start, then by
     # longest span first.
@@ -226,14 +298,67 @@ def detect_phone(
         if end < len(text) and (text[end].isalnum() or text[end] == "@"):
             continue
 
-        results.append(
-            {
-                "type": "PHONE",
-                "text": entity_text,
-                "start": start,
-                "end": end,
-            }
-        )
+        results.append({
+            "type": "PHONE",
+            "text": entity_text,
+            "start": start,
+            "end": end,
+        })
+    return results
+
+
+def detect_date(
+    text: str,
+    excluded_entities: list[dict[str, Any]] | None = None,
+) -> list[dict[str, Any]]:
+    """Detect date/time spans in *text*.
+
+    Covers numeric dates, English month-name dates, Vietnamese date formats,
+    month/year, and contextual year-only ("năm 2024", "year 2024").
+
+    Candidates that overlap with already-detected entities (EMAIL, URL, PHONE)
+    are discarded to avoid false positives.
+
+    Returns a list of entity dicts with keys: type, text, start, end.
+    """
+    excluded_spans = _entity_spans(excluded_entities or [])
+
+    raw_matches: list[tuple[int, int, str]] = []  # (start, end, text)
+
+    for pattern in DATE_PATTERNS:
+        for match in pattern.finditer(text):
+            start = match.start()
+            end = match.end()
+
+            # Strip trailing punctuation.
+            entity_text, start, end = _strip_trailing_punctuation(text, start, end)
+
+            if not entity_text:
+                continue
+
+            # Skip if overlapping with a higher-priority entity.
+            if _overlaps_any_span(start, end, excluded_spans):
+                continue
+
+            raw_matches.append((start, end, entity_text))
+
+    # De-duplicate: when multiple patterns match the same or overlapping span,
+    # keep the longest match.  Sort by start then longest span.
+    raw_matches.sort(key=lambda m: (m[0], -(m[1] - m[0])))
+    results: list[dict[str, Any]] = []
+    occupied: list[tuple[int, int]] = []
+
+    for start, end, entity_text in raw_matches:
+        if _overlaps_any_span(start, end, occupied):
+            continue
+        results.append({
+            "type": "DATE",
+            "text": entity_text,
+            "start": start,
+            "end": end,
+        })
+        occupied.append((start, end))
+
     return results
 
 
@@ -246,18 +371,137 @@ def detect_regex_entities(text: str) -> list[dict[str, Any]]:
     """Run all regex-based detectors and return a clean, non-overlapping,
     sorted list of entity dicts.
 
-    Priority for overlap resolution: EMAIL > URL > PHONE.
+    Priority for overlap resolution: EMAIL > URL > PHONE > DATE.
     Output is sorted by ``start`` index ascending.
     """
     email_entities = detect_email(text)
     url_entities = detect_url(text)
-    phone_entities = detect_phone(text, email_entities + url_entities)
+    higher_priority = email_entities + url_entities
+    phone_entities = detect_phone(text, higher_priority)
+    date_entities = detect_date(text, higher_priority + phone_entities)
 
     all_entities: list[dict[str, Any]] = []
     all_entities.extend(email_entities)
     all_entities.extend(url_entities)
     all_entities.extend(phone_entities)
+    all_entities.extend(date_entities)
 
     # Resolve any remaining overlaps.
     clean = _resolve_regex_overlaps(all_entities)
     return clean
+
+
+# Alias so the rest of the project (web/app.py, tests, merger) can import
+# the original name used in the skeleton.
+detect_by_regex = detect_regex_entities
+
+
+# ---------------------------------------------------------------------------
+# Self-test
+# ---------------------------------------------------------------------------
+
+if __name__ == "__main__":
+    test_cases = [
+        # Case A
+        (
+            "Contact: john@gmail.com, phone: +84 912 345 678.",
+            "Case A: email + phone",
+        ),
+        # Case B
+        (
+            "Visit https://example.com/profile/0912345678 now.",
+            "Case B: URL containing phone-like digits",
+        ),
+        # Case C
+        (
+            "My email is john123@gmail.com",
+            "Case C: email with digits (no false phone)",
+        ),
+        # Case D
+        (
+            "Call me at 0912-345-678 or 0912 345 678.",
+            "Case D: two phone numbers",
+        ),
+        # Case E
+        (
+            "Website: www.example.com.",
+            "Case E: www URL with trailing period",
+        ),
+        # Case F
+        (
+            "The year is 2024 and the code is 12345.",
+            "Case F: no entities (short numbers)",
+        ),
+        # Case G
+        (
+            "Emergency number: (091) 234 5678.",
+            "Case G: phone with parentheses",
+        ),
+        # Case H
+        (
+            "Send to jane.doe+test@example.co.uk!",
+            "Case H: email with plus and exclamation",
+        ),
+        # Mixed
+        (
+            "Email me at john@gmail.com, visit http://example.com/path?q=1 "
+            "or www.example.com, call +1 (415) 555-2671 or 415.555.2671.",
+            "Mixed: all entity types",
+        ),
+        # Edge: empty
+        (
+            "",
+            "Edge: empty string",
+        ),
+        # --- DATE test cases ---
+        # Case I: numeric dates
+        (
+            "The deadline is 01/02/2024 or 2024-02-01.",
+            "Case I: numeric dates (DD/MM/YYYY and YYYY-MM-DD)",
+        ),
+        # Case J: English month-name dates
+        (
+            "Born on January 2, 2024 and graduated 2 Jan 2024.",
+            "Case J: English month-name dates",
+        ),
+        # Case K: Vietnamese dates
+        (
+            "Ngày sinh: ngày 02 tháng 01 năm 2024.",
+            "Case K: Vietnamese date",
+        ),
+        # Case L: month/year only
+        (
+            "Published in January 2024 and 01/2024.",
+            "Case L: month/year formats",
+        ),
+        # Case M: contextual year only
+        (
+            "Established in năm 2024 and year 2024.",
+            "Case M: contextual year-only",
+        ),
+        # Case N: bare 4-digit number should NOT be detected as DATE
+        (
+            "The code is 2024 and ID is 1999.",
+            "Case N: bare numbers (no false DATE)",
+        ),
+        # Case O: date inside URL should NOT be detected
+        (
+            "See https://example.com/2024/01/02 for details.",
+            "Case O: date-like segment inside URL",
+        ),
+    ]
+
+    for text, label in test_cases:
+        print(f"\n{'='*60}")
+        print(f"  {label}")
+        print(f"  Input: {text!r}")
+        print(f"{'='*60}")
+        entities = detect_regex_entities(text)
+        if not entities:
+            print("  (no entities detected)")
+        for ent in entities:
+            print(
+                f"  {ent['type']:6s}  "
+                f"[{ent['start']:3d}:{ent['end']:3d}]  "
+                f"{ent['text']!r}"
+            )
