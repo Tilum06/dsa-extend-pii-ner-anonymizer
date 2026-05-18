@@ -52,7 +52,7 @@ report/*.lot
 report/*.fls
 report/*.fdb_latexmk
 report/*.synctex.gz
-report/*.pdf
+# report/*.pdf
 
 # Jupyter Notebook
 .ipynb_checkpoints/
@@ -65,3 +65,14 @@ report/*.pdf
 *.log
 Thumbs.db
 .DS_Store
+
+
+**/*.aux
+**/*.log
+**/*.out
+
+# Temporary files
+*.tmp
+*.temp
+tmp/
+temp/

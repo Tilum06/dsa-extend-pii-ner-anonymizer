@@ -18,19 +18,6 @@ def _priority_rank(entity_type: str) -> int:
         return len(ENTITY_PRIORITY)
 
 
-def sort_entities(entities: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    """Sort entities by position and project priority.
-
-    Primary sort: start index ascending.
-    Secondary sort: longer span first (end descending).
-    Tertiary sort: higher priority first (lower rank value).
-    """
-    return sorted(
-        entities,
-        key=lambda e: (e["start"], -e["end"], _priority_rank(e["type"])),
-    )
-
-
 def resolve_overlaps(entities: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """Remove overlapping entities according to project priority.
 

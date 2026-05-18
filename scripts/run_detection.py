@@ -62,29 +62,15 @@ def run_detection(samples: list[dict[str, Any]]) -> list[dict[str, Any]]:
     for idx, sample in enumerate(samples, start=1):
         sample_id = sample.get("id", idx)
         text: str = sample.get("text", "")
-        tokens: list[str] = sample.get("tokens", [])
 
         # --- Regex-based detection ---
         regex_entities = detect_regex_entities(text)
 
         # --- Context-based detection ---
-        # The implemented detect_by_context() takes only text;
-        # pass tokens if the function signature accepts them.
-        try:
-            context_entities = detect_by_context(text)  # type: ignore[arg-type]
-        except TypeError:
-            # Fallback: some versions may accept (text, tokens)
-            context_entities = detect_by_context(text)  # type: ignore[call-arg]
+        context_entities = detect_by_context(text)
 
         # --- Merge ---
-        try:
-            merged = merge_entities(regex_entities, context_entities)
-        except NotImplementedError:
-            # If merger is not yet implemented, just concatenate and sort.
-            merged = sorted(
-                regex_entities + context_entities,
-                key=lambda e: e["start"],
-            )
+        merged = merge_entities(regex_entities, context_entities)
 
         predictions.append({
             "id": sample_id,

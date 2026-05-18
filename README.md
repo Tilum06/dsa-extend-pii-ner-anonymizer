@@ -1,961 +1,95 @@
-# Nhận diện và ẩn danh thông tin cá nhân trong văn bản bằng Rule-based String Matching
+# Rule-based PII NER Anonymizer
 
-Đây là skeleton project Python cho bài toán phát hiện và ẩn danh thông tin cá nhân trong văn bản. Mục tiêu của dự án là xây dựng một pipeline thuần thuật toán để đọc văn bản thô, phát hiện các thực thể PII phổ biến, rồi thay thế chúng bằng nhãn tương ứng như `[NAME]`, `[EMAIL]`, `[PHONE]`.
+Project phát hiện và ẩn danh thông tin cá nhân trong văn bản bằng rule-based string matching. Hệ thống không dùng machine learning hoặc deep learning.
 
-Project tập trung vào hướng rule-based, sử dụng regular expression, keyword matching và xử lý chuỗi. Project không sử dụng machine learning hoặc deep learning, và README này mô tả khung sườn triển khai trước khi đi vào phần code chi tiết.
+## Trạng thái hiện tại
 
-Về phạm vi hiện tại, hệ thống hướng tới 6 loại entity chính:
+Project đã được đóng gói về trạng thái final:
 
-- NAME
-- EMAIL
-- PHONE
-- ADDRESS
-- USERNAME
-- URL
+- Pipeline chính chạy qua `python -m src.main` hoặc `python main.py`.
+- Tài liệu module nằm trong `docs/pipeline.md`.
+- Test suite chỉ tập trung vào `src/merger.py` để kiểm tra chất lượng gộp entity và performance tổng thể.
+- Dockerfile đã được thêm để build và chạy pipeline trong container.
+- Các nhánh code demo/legacy và function chưa dùng rõ ràng đã được dọn khỏi runtime chính.
 
-Dataset chính là `data/raw/pii_dataset.csv`, được lấy từ Kaggle PII External Dataset. Sau khi kiểm tra file CSV dùng trong project, dataset có 4434 dòng và 16 cột, trong đó các cột quan trọng nhất là `document`, `text`, `tokens`, `trailing_whitespace` và `labels`.
-
-## Mục tiêu
-
-Xây dựng hệ thống phát hiện và ẩn danh các thông tin định danh cá nhân trong văn bản, bao gồm 6 loại entity:
-
-- NAME
-- EMAIL
-- PHONE
-- ADDRESS
-- USERNAME
-- URL
-
-Lưu ý: `O` không phải là entity cần phát hiện. Trong BIO tagging, `O` chỉ có nghĩa là token không thuộc bất kỳ entity nào.
-
-Hệ thống nhận đầu vào là văn bản thô, phát hiện các thực thể PII bằng luật thủ công, sau đó thay thế các thông tin này bằng nhãn tương ứng.
-
-Ví dụ:
+## Entity hỗ trợ
 
 ```text
-Input:
-My name is John Smith and my email is john@gmail.com.
-
-Output:
-My name is [NAME] and my email is [EMAIL].
+NAME
+EMAIL
+PHONE
+ADDRESS
+ORGANIZATION
+LOCATION
+USERNAME
+URL
 ```
 
-## Vì sao không dùng Machine Learning / Deep Learning
-
-Project này phục vụ mục tiêu học thuật về thuật toán xử lý chuỗi. Vì vậy, project không sử dụng các thư viện huấn luyện mô hình như scikit-learn, PyTorch, TensorFlow, Keras, spaCy, transformers hoặc CRF libraries.
-
-Thay vào đó, hệ thống sử dụng các kỹ thuật:
-
-- Regular Expression
-- Pattern Matching
-- Keyword Matching
-- Token Scanning
-- Rule-based Detection
-- Greedy Interval Selection
-- Exact Span Matching
-
-Dataset có sẵn nhãn BIO, nhưng nhãn này chỉ dùng để tạo ground truth và đánh giá kết quả. Project không dùng nhãn để train mô hình.
-
-## Schema dataset
-
-File `pii_dataset.csv` có các cột sau:
-
-```text
-document
-text
-tokens
-trailing_whitespace
-labels
-prompt
-prompt_id
-name
-email
-phone
-job
-address
-username
-url
-hobby
-len
-```
-
-Các cột cần dùng trực tiếp trong pipeline:
-
-| Cột | Vai trò |
-|---|---|
-| `document` | ID hoặc mã định danh của sample |
-| `text` | Văn bản gốc |
-| `tokens` | Danh sách token trong văn bản |
-| `trailing_whitespace` | Thông tin khoảng trắng sau token, nếu cần khôi phục span |
-| `labels` | Danh sách nhãn BIO tương ứng với `tokens` |
-
-Các cột `name`, `email`, `phone`, `address`, `username`, `url` là thông tin PII được sinh sẵn trong từng sample. Có thể dùng để inspect dữ liệu, nhưng ground truth chính nên được tạo từ `tokens` và `labels`.
-
-Các cột không dùng làm entity chính trong phiên bản hiện tại:
-
-| Cột | Lý do |
-|---|---|
-| `job` | Không có nhãn BIO tương ứng trong phạm vi entity đã chọn |
-| `hobby` | Không phải PII chính cần ẩn danh |
-| `prompt`, `prompt_id` | Metadata tạo dữ liệu |
-| `len` | Độ dài sample, chỉ dùng để thống kê nếu cần |
-
-## Pipeline xử lý
-
-```text
-pii_dataset.csv
--> load_raw_dataset()
--> normalize_text()
--> convert BIO labels to ground truth entities
--> run regex-based detector
--> run context-based detector
--> merge detected entities
--> resolve overlapping entities
--> anonymize text
--> evaluate prediction with ground truth
--> JSON / CSV output
-```
-
-## BIO tagging
-
-Dataset sử dụng định dạng BIO cho bài toán NER:
-
-```text
-O
-B-NAME_STUDENT
-I-NAME_STUDENT
-B-EMAIL
-B-PHONE_NUM
-I-PHONE_NUM
-B-STREET_ADDRESS
-I-STREET_ADDRESS
-B-USERNAME
-B-URL_PERSONAL
-```
-
-Ý nghĩa:
-
-- `B-X`: token bắt đầu của entity loại X
-- `I-X`: token tiếp theo thuộc cùng entity loại X
-- `O`: token không thuộc entity nào
-
-Ví dụ:
-
-```text
-Token           Label
-My              O
-name            O
-is              O
-John            B-NAME_STUDENT
-Smith           I-NAME_STUDENT
-and             O
-my              O
-email           O
-is              O
-john@gmail.com  B-EMAIL
-```
-
-Sau khi xử lý BIO, ground truth sẽ có dạng:
-
-```json
-[
-  {
-    "type": "NAME",
-    "text": "John Smith",
-    "start": 11,
-    "end": 21
-  },
-  {
-    "type": "EMAIL",
-    "text": "john@gmail.com",
-    "start": 38,
-    "end": 52
-  }
-]
-```
-
-## Mapping nhãn từ dataset sang project
-
-Tên nhãn trong dataset gốc dài hơn tên entity dùng trong project. Vì vậy, bước preprocessing cần ánh xạ nhãn như sau:
-
-| Label trong dataset | Entity dùng trong project |
-|---|---|
-| `B-NAME_STUDENT`, `I-NAME_STUDENT` | `NAME` |
-| `B-EMAIL` | `EMAIL` |
-| `B-PHONE_NUM`, `I-PHONE_NUM` | `PHONE` |
-| `B-STREET_ADDRESS`, `I-STREET_ADDRESS` | `ADDRESS` |
-| `B-USERNAME` | `USERNAME` |
-| `B-URL_PERSONAL` | `URL` |
-| `O` | Không phải entity |
-
-Ví dụ:
-
-```python
-LABEL_MAPPING = {
-    "NAME_STUDENT": "NAME",
-    "EMAIL": "EMAIL",
-    "PHONE_NUM": "PHONE",
-    "STREET_ADDRESS": "ADDRESS",
-    "USERNAME": "USERNAME",
-    "URL_PERSONAL": "URL",
-}
-```
-
-Khi đọc label BIO, cần bỏ tiền tố `B-` hoặc `I-`, sau đó dùng bảng mapping trên để đổi sang entity chuẩn của project.
-
-## Phân công công việc
-
-| Thành viên | Công việc chính | File phụ trách |
-|---|---|---|
-| Người 1 | Dataset preprocessing, chuyển BIO labels thành ground truth entities | `src/preprocessing.py` |
-| Người 2 | Nhận diện EMAIL, PHONE, URL bằng regex | `src/regex_detector.py` |
-| Người 3 | Nhận diện NAME, USERNAME, ADDRESS bằng rule ngữ cảnh | `src/context_detector.py` |
-| Người 4 | Gộp kết quả, xử lý overlap, ẩn danh, đánh giá, chạy demo | `src/merger.py`, `src/anonymizer.py`, `src/evaluator.py`, `src/main.py` |
-
-## Vai trò từng thành viên
-
-### Người 1: Dataset preprocessing
-
-Người 1 phụ trách chuẩn bị dữ liệu đầu vào và đáp án đúng cho toàn bộ hệ thống.
-
-Nhiệm vụ:
-
-- Đọc file `pii_dataset.csv`
-- Lấy các cột cần thiết: `document`, `text`, `tokens`, `trailing_whitespace`, `labels`
-- Chuyển chuỗi biểu diễn list trong `tokens` và `labels` thành list Python
-- Chuẩn hóa văn bản nếu cần
-- Chuyển BIO labels thành danh sách ground truth entities
-- Ánh xạ label gốc sang entity chuẩn của project
-- Xuất dữ liệu đã xử lý ra `data/processed/processed_data.json`
-
-Output mẫu:
-
-```json
-{
-  "id": 1,
-  "text": "My name is John Smith and my email is john@gmail.com.",
-  "tokens": ["My", "name", "is", "John", "Smith", "and", "my", "email", "is", "john@gmail.com"],
-  "ground_truth": [
-    {
-      "type": "NAME",
-      "text": "John Smith",
-      "start": 11,
-      "end": 21
-    },
-    {
-      "type": "EMAIL",
-      "text": "john@gmail.com",
-      "start": 38,
-      "end": 52
-    }
-  ]
-}
-```
-
-### Người 2: Regex-based detector
-
-Người 2 phụ trách nhận diện các PII có cấu trúc rõ ràng:
-
-- EMAIL
-- PHONE
-- URL
-
-Các loại này phù hợp với regular expression vì có mẫu chuỗi tương đối cố định.
-
-Ví dụ:
-
-```python
-email_pattern = r"[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+"
-phone_pattern = r"(\+?\d{1,3}[\s.-]?)?(\(?\d{2,4}\)?[\s.-]?)?\d{3,4}[\s.-]?\d{3,4}"
-url_pattern = r"https?://\S+|www\.\S+"
-```
-
-Với PHONE, sau khi regex bắt được chuỗi ứng viên, nên kiểm tra thêm:
-
-- Tổng số chữ số thường nằm trong khoảng 9 đến 15
-- Không nằm bên trong EMAIL
-- Không nằm bên trong URL
-- Không bắt nhầm một phần của địa chỉ hoặc mã số quá ngắn
-
-Output mẫu:
-
-```json
-[
-  {
-    "type": "EMAIL",
-    "text": "john@gmail.com",
-    "start": 38,
-    "end": 52
-  }
-]
-```
-
-### Người 3: Context-based detector
-
-Người 3 phụ trách các PII khó hơn, cần kết hợp keyword, ngữ cảnh và token scanning:
-
-- NAME
-- USERNAME
-- ADDRESS
-
-Ví dụ rule cho NAME:
-
-```text
-Nếu gặp cụm mạnh như "my name is", "full name", "name:"
--> kiểm tra các token phía sau
--> nếu token bắt đầu bằng chữ hoa và không chứa số
--> gom 1 đến 4 token liên tiếp thành NAME
-```
-
-Lưu ý: các cụm yếu như `I am` dễ gây false positive, vì câu như `I am happy` hoặc `I am studying Computer Science` không phải lúc nào cũng chứa tên người. Nếu dùng `I am`, cần thêm điều kiện kiểm tra chặt hơn.
-
-Ví dụ rule cho ADDRESS:
-
-```text
-Nếu gặp số nhà
--> quét các token phía sau
--> nếu có keyword như Street, Road, Avenue, District, City, St., Rd., Ave.
--> gán cụm đó là ADDRESS
-```
-
-Ví dụ rule cho USERNAME:
-
-```text
-Nếu gặp keyword như "username", "user name", "account", "handle"
--> kiểm tra token phía sau
--> nếu token có dạng chữ/số/gạch dưới hoặc bắt đầu bằng @
--> gán token đó là USERNAME
-```
-
-Output mẫu:
-
-```json
-[
-  {
-    "type": "NAME",
-    "text": "John Smith",
-    "start": 11,
-    "end": 21
-  },
-  {
-    "type": "ADDRESS",
-    "text": "123 Nguyen Trai Street",
-    "start": 65,
-    "end": 88
-  }
-]
-```
-
-### Người 4: Integration, anonymization and evaluation
-
-Người 4 phụ trách ghép toàn bộ project thành hệ thống hoàn chỉnh.
-
-Nhiệm vụ:
-
-- Gộp kết quả từ người 2 và người 3
-- Xử lý entity bị trùng hoặc chồng lấn
-- Thay PII bằng nhãn tương ứng
-- So sánh prediction với ground truth
-- Tính Precision, Recall, F1-score
-- Xuất file kết quả
-- Viết file chạy chính `main.py`
-
-Ví dụ xử lý overlap:
-
-```text
-john@gmail.com -> EMAIL
-john -> USERNAME
-```
-
-Vì `john` nằm trong `john@gmail.com`, hệ thống giữ entity dài hơn hoặc entity có độ ưu tiên cao hơn.
-
-Thứ tự ưu tiên khi overlap:
-
-```text
-EMAIL > URL > PHONE > ADDRESS > NAME > USERNAME
-```
-
-## Cấu trúc thư mục
-
-```text
-pii_rule_based_detection/
-  data/
-    raw/
-      pii_dataset.csv
-    processed/
-      processed_data.json
-
-  src/
-    preprocessing.py
-    regex_detector.py
-    context_detector.py
-    merger.py
-    anonymizer.py
-    evaluator.py
-    main.py
-    config.py
-
-  scripts/
-    inspect_dataset.py
-    run_preprocessing.py
-    run_detection.py
-    run_evaluation.py
-
-  tests/
-    test_preprocessing.py
-    test_regex_detector.py
-    test_context_detector.py
-    test_merger.py
-    test_anonymizer.py
-    test_evaluator.py
-
-  results/
-    predictions.json
-    anonymized_output.json
-    evaluation_result.csv
-
-  notebooks/
-    demo.ipynb
-
-  report/
-    report.tex
-    figures/
-    references.bib
-
-  README.md
-  requirements.txt
-```
-
-## Input/Output chuẩn cho từng module
-
-Để các thành viên code song song mà không bị lệch format, toàn bộ project dùng chung một chuẩn entity như sau:
+Mọi entity dùng chung schema:
 
 ```json
 {
   "type": "EMAIL",
-  "text": "john@gmail.com",
-  "start": 38,
-  "end": 52
-}
-```
-
-| Trường | Kiểu dữ liệu | Ý nghĩa |
-|---|---|---|
-| `type` | string | Loại PII, ví dụ `EMAIL`, `PHONE`, `NAME` |
-| `text` | string | Chuỗi được phát hiện trong văn bản |
-| `start` | int | Vị trí ký tự bắt đầu trong văn bản gốc |
-| `end` | int | Vị trí ký tự kết thúc, không bao gồm ký tự tại vị trí `end` |
-
-Ví dụ:
-
-```text
-My email is john@gmail.com.
-            ^             ^
-            start=12      end=26
-```
-
-Entity tương ứng:
-
-```json
-{
-  "type": "EMAIL",
-  "text": "john@gmail.com",
+  "text": "john@example.com",
   "start": 12,
-  "end": 26
+  "end": 28
 }
 ```
 
-### 1. Module `preprocessing.py`
-
-Module này do người 1 phụ trách.
-
-Nhiệm vụ:
-
-```text
-Dataset gốc -> dữ liệu đã xử lý + ground truth entities
-```
-
-#### Input
-
-File dữ liệu gốc:
+## Pipeline
 
 ```text
 data/raw/pii_dataset.csv
+-> preprocessing
+-> data/processed/processed_data.json
+-> regex detector
+-> context detector
+-> merger
+-> anonymizer
+-> evaluator
+-> results/
 ```
 
-Một dòng dữ liệu gốc có thể có dạng:
+Module chính:
 
-```json
-{
-  "document": 1,
-  "text": "My name is John Smith and my email is john@gmail.com.",
-  "tokens": ["My", "name", "is", "John", "Smith", "and", "my", "email", "is", "john@gmail.com"],
-  "labels": ["O", "O", "O", "B-NAME_STUDENT", "I-NAME_STUDENT", "O", "O", "O", "O", "B-EMAIL"]
-}
+| Module | Vai trò |
+|---|---|
+| `src/preprocessing.py` | Đọc CSV, parse token/label, tạo ground truth từ BIO labels |
+| `src/tokenizer.py` | Tokenize text bằng whitespace split |
+| `src/regex_detector.py` | Detect `EMAIL`, `PHONE`, `URL` |
+| `src/context_detector.py` | Detect `NAME`, `ORGANIZATION`, `LOCATION`, `USERNAME`, `ADDRESS` bằng rule ngữ cảnh |
+| `src/merger.py` | Gộp entity, xử lý trùng và overlap |
+| `src/anonymizer.py` | Thay PII bằng placeholder như `[EMAIL]` |
+| `src/evaluator.py` | Tính precision, recall, F1 bằng exact-span match |
+| `src/main.py` | Chạy full pipeline |
+
+Xem chi tiết từng module tại [docs/pipeline.md](docs/pipeline.md).
+
+## Cài đặt
+
+```bash
+pip install -r requirements.txt
 ```
 
-#### Output
+## Chạy preprocessing
 
-File dữ liệu đã xử lý:
-
-```text
-data/processed/processed_data.json
+```bash
+python scripts/run_preprocessing.py --input data/raw/pii_dataset.csv --output data/processed/processed_data.json
 ```
 
-Format chuẩn:
+## Chạy full pipeline
 
-```json
-[
-  {
-    "id": 1,
-    "text": "My name is John Smith and my email is john@gmail.com.",
-    "tokens": ["My", "name", "is", "John", "Smith", "and", "my", "email", "is", "john@gmail.com"],
-    "ground_truth": [
-      {
-        "type": "NAME",
-        "text": "John Smith",
-        "start": 11,
-        "end": 21
-      },
-      {
-        "type": "EMAIL",
-        "text": "john@gmail.com",
-        "start": 38,
-        "end": 52
-      }
-    ]
-  }
-]
+```bash
+python -m src.main
 ```
 
-#### Hàm chính
+Hoặc:
 
-```python
-def load_raw_dataset(path: str) -> list[dict]:
-    pass
-
-def normalize_text(text: str) -> str:
-    pass
-
-def map_bio_label(label: str) -> str | None:
-    pass
-
-def convert_bio_to_entities(text: str, tokens: list[str], labels: list[str]) -> list[dict]:
-    pass
-
-def build_processed_dataset(raw_data: list[dict]) -> list[dict]:
-    pass
-
-def save_processed_data(data: list[dict], output_path: str) -> None:
-    pass
-```
-
-Ví dụ output của `convert_bio_to_entities()`:
-
-```python
-[
-    {
-        "type": "NAME",
-        "text": "John Smith",
-        "start": 11,
-        "end": 21
-    }
-]
-```
-
-### 2. Module `regex_detector.py`
-
-Module này do người 2 phụ trách.
-
-Nhiệm vụ:
-
-```text
-Text -> EMAIL, PHONE, URL entities
-```
-
-#### Input
-
-Một sample đã xử lý từ `processed_data.json`:
-
-```json
-{
-  "id": 1,
-  "text": "Contact me at john@gmail.com or +84 912 345 678.",
-  "tokens": ["Contact", "me", "at", "john@gmail.com", "or", "+84", "912", "345", "678"],
-  "ground_truth": []
-}
-```
-
-#### Output
-
-Danh sách entity phát hiện được bằng regex:
-
-```json
-[
-  {
-    "type": "EMAIL",
-    "text": "john@gmail.com",
-    "start": 14,
-    "end": 28
-  },
-  {
-    "type": "PHONE",
-    "text": "+84 912 345 678",
-    "start": 32,
-    "end": 48
-  }
-]
-```
-
-#### Hàm chính
-
-```python
-def detect_email(text: str) -> list[dict]:
-    pass
-
-def detect_phone(text: str) -> list[dict]:
-    pass
-
-def detect_url(text: str) -> list[dict]:
-    pass
-
-def detect_regex_entities(text: str) -> list[dict]:
-    pass
-```
-
-Ví dụ:
-
-```python
-text = "Contact me at john@gmail.com or visit https://example.com."
-
-detect_regex_entities(text)
+```bash
+python main.py
 ```
 
 Output:
-
-```python
-[
-    {
-        "type": "EMAIL",
-        "text": "john@gmail.com",
-        "start": 14,
-        "end": 28
-    },
-    {
-        "type": "URL",
-        "text": "https://example.com",
-        "start": 38,
-        "end": 57
-    }
-]
-```
-
-### 3. Module `context_detector.py`
-
-Module này do người 3 phụ trách.
-
-Nhiệm vụ:
-
-```text
-Text + tokens -> NAME, USERNAME, ADDRESS entities
-```
-
-#### Input
-
-Một sample đã xử lý từ `processed_data.json`:
-
-```json
-{
-  "id": 2,
-  "text": "My name is John Smith. I live at 123 Nguyen Trai Street.",
-  "tokens": ["My", "name", "is", "John", "Smith", ".", "I", "live", "at", "123", "Nguyen", "Trai", "Street"],
-  "ground_truth": []
-}
-```
-
-#### Output
-
-Danh sách entity phát hiện bằng rule ngữ cảnh:
-
-```json
-[
-  {
-    "type": "NAME",
-    "text": "John Smith",
-    "start": 11,
-    "end": 21
-  },
-  {
-    "type": "ADDRESS",
-    "text": "123 Nguyen Trai Street",
-    "start": 33,
-    "end": 56
-  }
-]
-```
-
-#### Hàm chính
-
-```python
-def detect_name(text: str, tokens: list[str]) -> list[dict]:
-    pass
-
-def detect_username(text: str, tokens: list[str]) -> list[dict]:
-    pass
-
-def detect_address(text: str, tokens: list[str]) -> list[dict]:
-    pass
-
-def detect_context_entities(text: str, tokens: list[str]) -> list[dict]:
-    pass
-```
-
-Ví dụ:
-
-```python
-text = "My name is John Smith. My username is john_smith22."
-tokens = ["My", "name", "is", "John", "Smith", ".", "My", "username", "is", "john_smith22", "."]
-
-detect_context_entities(text, tokens)
-```
-
-Output:
-
-```python
-[
-    {
-        "type": "NAME",
-        "text": "John Smith",
-        "start": 11,
-        "end": 21
-    },
-    {
-        "type": "USERNAME",
-        "text": "john_smith22",
-        "start": 38,
-        "end": 50
-    }
-]
-```
-
-### 4. Module `merger.py`
-
-Module này do người 4 phụ trách.
-
-Nhiệm vụ:
-
-```text
-Regex entities + context entities -> final entities
-```
-
-Module này dùng để gộp kết quả từ người 2 và người 3, đồng thời xử lý các entity bị trùng hoặc chồng lấn.
-
-#### Input
-
-Output từ `regex_detector.py`:
-
-```python
-regex_entities = [
-    {
-        "type": "EMAIL",
-        "text": "john@gmail.com",
-        "start": 12,
-        "end": 26
-    }
-]
-```
-
-Output từ `context_detector.py`:
-
-```python
-context_entities = [
-    {
-        "type": "USERNAME",
-        "text": "john",
-        "start": 12,
-        "end": 16
-    }
-]
-```
-
-#### Output
-
-Danh sách entity cuối cùng:
-
-```python
-[
-    {
-        "type": "EMAIL",
-        "text": "john@gmail.com",
-        "start": 12,
-        "end": 26
-    }
-]
-```
-
-Trong ví dụ trên, `USERNAME` bị loại vì nằm bên trong `EMAIL`.
-
-#### Hàm chính
-
-```python
-def is_overlap(entity_a: dict, entity_b: dict) -> bool:
-    pass
-
-def choose_better_entity(entity_a: dict, entity_b: dict) -> dict:
-    pass
-
-def resolve_overlaps(entities: list[dict]) -> list[dict]:
-    pass
-
-def merge_entities(regex_entities: list[dict], context_entities: list[dict]) -> list[dict]:
-    pass
-```
-
-Rule đề xuất khi overlap:
-
-```text
-1. Nếu priority khác nhau, chọn entity có priority cao hơn.
-2. Nếu priority bằng nhau, chọn entity dài hơn.
-3. Nếu vẫn bằng nhau, chọn entity xuất hiện trước trong văn bản.
-```
-
-Priority:
-
-```text
-EMAIL > URL > PHONE > ADDRESS > NAME > USERNAME
-```
-
-### 5. Module `anonymizer.py`
-
-Module này do người 4 phụ trách.
-
-Nhiệm vụ:
-
-```text
-Text + final entities -> anonymized text
-```
-
-#### Input
-
-```python
-text = "My name is John Smith and my email is john@gmail.com."
-
-entities = [
-    {"type": "NAME", "text": "John Smith", "start": 11, "end": 21},
-    {"type": "EMAIL", "text": "john@gmail.com", "start": 38, "end": 52}
-]
-```
-
-#### Output
-
-```python
-"My name is [NAME] and my email is [EMAIL]."
-```
-
-#### Hàm chính
-
-```python
-def anonymize_text(text: str, entities: list[dict]) -> str:
-    pass
-```
-
-Lưu ý: nên thay thế từ cuối văn bản về đầu văn bản để không làm lệch chỉ số `start` và `end`.
-
-Pseudo-code:
-
-```text
-Sort entities by start position in descending order
-For each entity:
-    Replace text[entity.start:entity.end] with "[" + entity.type + "]"
-Return anonymized text
-```
-
-### 6. Module `evaluator.py`
-
-Module này do người 4 phụ trách.
-
-Nhiệm vụ:
-
-```text
-Predicted entities + ground truth entities -> Precision, Recall, F1-score
-```
-
-#### Input
-
-Prediction của hệ thống:
-
-```python
-predicted_entities = [
-    {"type": "NAME", "text": "John Smith", "start": 11, "end": 21},
-    {"type": "EMAIL", "text": "john@gmail.com", "start": 38, "end": 52}
-]
-```
-
-Ground truth từ người 1:
-
-```python
-ground_truth = [
-    {"type": "NAME", "text": "John Smith", "start": 11, "end": 21},
-    {"type": "EMAIL", "text": "john@gmail.com", "start": 38, "end": 52},
-    {"type": "PHONE", "text": "+84 912 345 678", "start": 60, "end": 76}
-]
-```
-
-#### Output
-
-```python
-{
-    "tp": 2,
-    "fp": 0,
-    "fn": 1,
-    "precision": 1.0,
-    "recall": 0.667,
-    "f1": 0.8
-}
-```
-
-#### Hàm chính
-
-```python
-def match_entity(pred_entity: dict, gold_entity: dict) -> bool:
-    pass
-
-def compute_precision_recall_f1(tp: int, fp: int, fn: int) -> dict:
-    pass
-
-def evaluate_predictions(predicted_entities: list[dict], ground_truth: list[dict]) -> dict:
-    pass
-```
-
-Điều kiện match:
-
-```text
-type giống nhau
-start giống nhau
-end giống nhau
-```
-
-### 7. Module `main.py`
-
-Module này do người 4 phụ trách.
-
-Nhiệm vụ:
-
-```text
-Chạy toàn bộ pipeline từ dữ liệu đã xử lý đến kết quả cuối cùng
-```
-
-#### Input
-
-File:
-
-```text
-data/processed/processed_data.json
-```
-
-#### Output
-
-Các file kết quả:
 
 ```text
 results/predictions.json
@@ -963,474 +97,58 @@ results/anonymized_output.json
 results/evaluation_result.csv
 ```
 
-#### Luồng xử lý
+## Test
 
-```python
-def main():
-    processed_data = load_json("data/processed/processed_data.json")
-
-    all_predictions = []
-    all_anonymized_outputs = []
-    all_metrics = []
-
-    for sample in processed_data:
-        text = sample["text"]
-        tokens = sample["tokens"]
-
-        regex_entities = detect_regex_entities(text)
-        context_entities = detect_context_entities(text, tokens)
-
-        final_entities = merge_entities(regex_entities, context_entities)
-        anonymized_text = anonymize_text(text, final_entities)
-
-        metrics = evaluate_predictions(final_entities, sample["ground_truth"])
-
-        all_predictions.append({
-            "id": sample["id"],
-            "predicted_entities": final_entities
-        })
-
-        all_anonymized_outputs.append({
-            "id": sample["id"],
-            "original_text": text,
-            "anonymized_text": anonymized_text
-        })
-
-        all_metrics.append(metrics)
-
-    save_json(all_predictions, "results/predictions.json")
-    save_json(all_anonymized_outputs, "results/anonymized_output.json")
-    save_csv(summarize_metrics(all_metrics), "results/evaluation_result.csv")
-```
-
-## Quy ước chung khi code
-
-Tất cả module cần tuân theo các quy ước sau:
-
-1. Không tự ý đổi tên trường `type`, `text`, `start`, `end`.
-2. `start` và `end` luôn tính theo vị trí ký tự trong văn bản gốc.
-3. `end` là vị trí kết thúc, không bao gồm ký tự tại vị trí `end`.
-4. Mỗi detector luôn trả về `list[dict]`, kể cả khi không tìm thấy gì.
-5. Nếu không tìm thấy entity nào, trả về list rỗng `[]`.
-6. Không module nào được sửa trực tiếp `text` gốc, trừ `anonymizer.py`.
-7. `regex_detector.py` và `context_detector.py` không tự đánh giá kết quả.
-8. Chỉ `evaluator.py` mới tính Precision, Recall, F1-score.
-9. Chỉ `main.py` chịu trách nhiệm gọi toàn bộ pipeline.
-10. Ground truth chỉ được tạo từ `preprocessing.py`.
-11. Không đưa `O` vào danh sách entity dự đoán hoặc ground truth.
-12. Tên entity cuối cùng chỉ dùng 6 giá trị: `NAME`, `EMAIL`, `PHONE`, `ADDRESS`, `USERNAME`, `URL`.
-
-## Ví dụ chạy xuyên suốt một sample
-
-Input từ `processed_data.json`:
-
-```json
-{
-  "id": 1,
-  "text": "My name is John Smith and my email is john@gmail.com.",
-  "tokens": ["My", "name", "is", "John", "Smith", "and", "my", "email", "is", "john@gmail.com"],
-  "ground_truth": [
-    {"type": "NAME", "text": "John Smith", "start": 11, "end": 21},
-    {"type": "EMAIL", "text": "john@gmail.com", "start": 38, "end": 52}
-  ]
-}
-```
-
-Output từ `regex_detector.py`:
-
-```json
-[
-  {"type": "EMAIL", "text": "john@gmail.com", "start": 38, "end": 52}
-]
-```
-
-Output từ `context_detector.py`:
-
-```json
-[
-  {"type": "NAME", "text": "John Smith", "start": 11, "end": 21}
-]
-```
-
-Output sau `merger.py`:
-
-```json
-[
-  {"type": "NAME", "text": "John Smith", "start": 11, "end": 21},
-  {"type": "EMAIL", "text": "john@gmail.com", "start": 38, "end": 52}
-]
-```
-
-Output sau `anonymizer.py`:
-
-```text
-My name is [NAME] and my email is [EMAIL].
-```
-
-Output sau `evaluator.py`:
-
-```json
-{
-  "tp": 2,
-  "fp": 0,
-  "fn": 0,
-  "precision": 1.0,
-  "recall": 1.0,
-  "f1": 1.0
-}
-```
-
-## Mô tả các file chính
-
-### `src/preprocessing.py`
-
-Chứa các hàm xử lý dữ liệu ban đầu:
-
-```python
-def load_raw_dataset(path):
-    pass
-
-def normalize_text(text):
-    pass
-
-def map_bio_label(label):
-    pass
-
-def convert_bio_to_entities(text, tokens, labels):
-    pass
-
-def build_processed_dataset(raw_data):
-    pass
-
-def save_processed_data(data, output_path):
-    pass
-```
-
-### `src/regex_detector.py`
-
-Chứa các hàm nhận diện PII bằng regex:
-
-```python
-def detect_email(text):
-    pass
-
-def detect_phone(text):
-    pass
-
-def detect_url(text):
-    pass
-
-def detect_regex_entities(text):
-    pass
-```
-
-### `src/context_detector.py`
-
-Chứa các hàm nhận diện PII bằng rule ngữ cảnh:
-
-```python
-def detect_name(text, tokens):
-    pass
-
-def detect_username(text, tokens):
-    pass
-
-def detect_address(text, tokens):
-    pass
-
-def detect_context_entities(text, tokens):
-    pass
-```
-
-### `src/merger.py`
-
-Chứa các hàm gộp và xử lý overlap:
-
-```python
-def is_overlap(entity_a, entity_b):
-    pass
-
-def choose_better_entity(entity_a, entity_b):
-    pass
-
-def resolve_overlaps(entities):
-    pass
-
-def merge_entities(regex_entities, context_entities):
-    pass
-```
-
-### `src/anonymizer.py`
-
-Chứa hàm thay thế PII bằng nhãn:
-
-```python
-def anonymize_text(text, entities):
-    pass
-```
-
-Ví dụ:
-
-```text
-John Smith -> [NAME]
-john@gmail.com -> [EMAIL]
-```
-
-### `src/evaluator.py`
-
-Chứa các hàm đánh giá kết quả:
-
-```python
-def match_entity(pred_entity, gold_entity):
-    pass
-
-def evaluate_predictions(predictions, ground_truth):
-    pass
-
-def compute_precision_recall_f1(tp, fp, fn):
-    pass
-```
-
-### `src/main.py`
-
-File chạy chính của hệ thống:
-
-```python
-def main():
-    # Load processed data
-    # Run regex detector
-    # Run context detector
-    # Merge entities
-    # Anonymize text
-    # Evaluate prediction
-    # Save output files
-    pass
-
-if __name__ == "__main__":
-    main()
-```
-
-## Chuẩn bị môi trường
-
-Cài thư viện:
+Project hiện chỉ test merger:
 
 ```bash
-pip install -r requirements.txt
+pytest tests/test_merger.py
 ```
 
-File `requirements.txt` có thể gồm:
+Merger là điểm quyết định output cuối cùng vì nó nhận kết quả từ nhiều detector, xử lý overlap, áp priority và trả về entity list sạch.
+
+Priority khi overlap:
 
 ```text
-pandas
-numpy
-tqdm
-pytest
+EMAIL > URL > PHONE > ADDRESS > ORGANIZATION > LOCATION > NAME > USERNAME
 ```
 
-Nếu chỉ dùng thư viện chuẩn Python và `pandas`, không cần cài thêm thư viện ML.
+## Docker
 
-## Inspect dataset
-
-Dùng script này để kiểm tra cấu trúc file dữ liệu:
+Build image:
 
 ```bash
-python scripts/inspect_dataset.py --input data/raw/pii_dataset.csv
+docker build -t pii-ner-anonymizer .
 ```
 
-Script nên in ra:
-
-```text
-- Số dòng dữ liệu
-- Danh sách cột
-- Một vài sample đầu tiên
-- Kiểu dữ liệu của cột tokens và labels
-- Danh sách nhãn BIO xuất hiện trong dataset
-- Số lượng từng loại nhãn
-```
-
-## Chạy preprocessing
+Run pipeline:
 
 ```bash
-python scripts/run_preprocessing.py \
-  --input data/raw/pii_dataset.csv \
-  --output data/processed/processed_data.json
+docker run --rm -v "%cd%/results:/app/results" pii-ner-anonymizer
 ```
 
-Output:
+Trên PowerShell, lệnh mount tương đương:
 
-```text
-data/processed/processed_data.json
+```powershell
+docker run --rm -v ${PWD}/results:/app/results pii-ner-anonymizer
 ```
 
-## Chạy detection
+Container mặc định chạy:
 
 ```bash
-python scripts/run_detection.py \
-  --input data/processed/processed_data.json \
-  --output results/predictions.json
+python -m src.main
 ```
 
-Output:
+## Web demo
 
-```text
-results/predictions.json
-```
-
-## Chạy anonymization và evaluation
+Web demo vẫn nằm trong `web/` và có thể chạy riêng:
 
 ```bash
-python scripts/run_evaluation.py \
-  --input data/processed/processed_data.json \
-  --predictions results/predictions.json \
-  --output results/evaluation_result.csv
+python web/app.py
 ```
 
-## Chạy toàn bộ pipeline
-
-```bash
-python src/main.py
-```
-
-Sau khi chạy, thư mục `results/` sẽ có:
+Mặc định Flask chạy tại:
 
 ```text
-results/
-  predictions.json
-  anonymized_output.json
-  evaluation_result.csv
+http://127.0.0.1:5000
 ```
-
-## Chạy test
-
-```bash
-pytest tests/
-```
-
-Nên viết test tối thiểu cho các phần:
-
-- Convert BIO labels to entity spans
-- Detect EMAIL
-- Detect PHONE
-- Detect URL
-- Detect NAME bằng context mạnh
-- Detect ADDRESS bằng keyword
-- Detect USERNAME
-- Resolve overlap giữa EMAIL và USERNAME
-- Anonymize theo thứ tự từ cuối về đầu
-- Evaluate exact match
-
-## Output dự kiến
-
-### `predictions.json`
-
-```json
-[
-  {
-    "id": 1,
-    "predicted_entities": [
-      {
-        "type": "NAME",
-        "text": "John Smith",
-        "start": 11,
-        "end": 21
-      },
-      {
-        "type": "EMAIL",
-        "text": "john@gmail.com",
-        "start": 38,
-        "end": 52
-      }
-    ]
-  }
-]
-```
-
-### `anonymized_output.json`
-
-```json
-[
-  {
-    "id": 1,
-    "original_text": "My name is John Smith and my email is john@gmail.com.",
-    "anonymized_text": "My name is [NAME] and my email is [EMAIL]."
-  }
-]
-```
-
-### `evaluation_result.csv`
-
-```csv
-Entity,Precision,Recall,F1
-EMAIL,0.95,0.90,0.92
-PHONE,0.90,0.85,0.87
-URL,0.93,0.91,0.92
-NAME,0.70,0.60,0.65
-ADDRESS,0.62,0.55,0.58
-USERNAME,0.75,0.68,0.71
-Overall,0.82,0.76,0.79
-```
-
-## Evaluation
-
-Hệ thống đánh giá theo entity-level matching.
-
-Một prediction được xem là đúng khi:
-
-```text
-predicted type == gold type
-predicted span == gold span
-```
-
-Các chỉ số:
-
-```text
-Precision = TP / (TP + FP)
-Recall    = TP / (TP + FN)
-F1-score  = 2 * Precision * Recall / (Precision + Recall)
-```
-
-Trong đó:
-
-- TP: entity dự đoán đúng
-- FP: entity dự đoán nhưng không có trong ground truth
-- FN: entity có trong ground truth nhưng hệ thống bỏ sót
-
-Do project dùng rule-based method, exact match có thể làm điểm thấp nếu entity bị lệch span nhỏ. Vì vậy, có thể báo cáo thêm partial match để phân tích lỗi, nhưng điểm chính vẫn nên dùng exact match.
-
-## Thuật toán chính
-
-Project gồm các thuật toán chính:
-
-1. Convert BIO Labels to Entity Spans
-2. Regex-based Email Detection
-3. Regex-based Phone Detection and Validation
-4. Regex-based URL Detection
-5. Context-based Name Detection
-6. Username Detection using Keyword and Pattern Matching
-7. Address Detection using Keyword Matching
-8. Overlap Resolution using Greedy Selection
-9. Text Anonymization by Reverse-order Replacement
-10. Entity-level Evaluation
-
-## Hạn chế hiện tại
-
-- Rule-based method khó nhận diện chính xác NAME và ADDRESS trong nhiều ngữ cảnh phức tạp
-- Regex có thể bỏ sót các format email, phone hoặc URL hiếm gặp
-- Có thể nhầm username với một phần của email
-- Dataset chủ yếu là tiếng Anh, chưa tối ưu cho tiếng Việt
-- Không có khả năng tự học từ dữ liệu mới
-- Kết quả phụ thuộc nhiều vào chất lượng rule thủ công
-- Entity-level exact match khá nghiêm ngặt, chỉ cần lệch span nhỏ cũng bị tính sai
-
-## Hướng phát triển
-
-1. Bổ sung thêm rule cho phone number theo từng quốc gia
-2. Cải thiện address detector bằng danh sách keyword mở rộng
-3. Thêm dictionary cho first name, last name và địa danh
-4. Thêm fuzzy matching cho các biến thể viết tắt như `St.`, `Rd.`, `Ave.`
-5. Tối ưu overlap resolution bằng interval scheduling
-6. Thêm giao diện web local để visualize kết quả
-7. Mở rộng sang dữ liệu tiếng Việt
-8. Thêm chế độ masking khác nhau: `[PII]`, `[EMAIL]`, hoặc giữ một phần thông tin
-9. Viết thêm test case cho từng detector
-10. Xuất báo cáo thống kê lỗi sai theo từng entity type

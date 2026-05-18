@@ -1,0 +1,60 @@
+\ProvidesPackage{codespace}
+
+% Options can be used to add more predefined colors (see Section 4)
+% e.g.: dvipsnames, svgnames, x11names
+\RequirePackage{xcolor}
+
+\RequirePackage{tikz}
+\RequirePackage[framemethod=tikz]{mdframed}
+\RequirePackage{listings,lstautogobble,verbatim}
+
+% Configurations
+\colorlet{codebackground}{black!4}
+\definecolor{codeframe}{RGB}{190,190,190}
+\definecolor{codebasic}{RGB}{62,62,62}
+\definecolor{codeidentifier}{RGB}{0,0,0}
+\definecolor{codecomment}{RGB}{0,120,102}
+\definecolor{codestring}{RGB}{173,92,0}
+\definecolor{codekeyword}{RGB}{0,92,175}
+
+\lstdefinestyle{codeframe}{
+    float=H,
+    frame=single,
+    rulecolor=\color{codeframe},
+    backgroundcolor=\color{codebackground},
+    framesep=8pt,
+    xleftmargin=1.5em,
+    xrightmargin=0.5em,
+    aboveskip=0.9em,
+    belowskip=0.9em,
+}
+\lstdefinestyle{codestyle}{
+    basicstyle=\small\ttfamily\color{codebasic},
+    identifierstyle=\color{codeidentifier},
+    commentstyle=\color{codecomment}\itshape,
+    stringstyle=\color{codestring},
+    keywordstyle=\bfseries\color{codekeyword},
+    numbers=left,
+    numbersep=8pt,
+    numberstyle=\scriptsize\color{codebasic!60},
+    autogobble=true,
+    breaklines=true,
+    breakatwhitespace=true,
+    columns=fullflexible,
+    keepspaces=true,
+    showstringspaces=false,
+    showtabs=false,
+    tabsize=4,
+    captionpos=b,
+}
+\lstset{
+    style=codeframe,
+    style=codestyle
+}
+
+\mdfsetup{
+    leftline=false,
+    rightline=false,
+    backgroundcolor=codebackground,
+    nobreak=false
+}

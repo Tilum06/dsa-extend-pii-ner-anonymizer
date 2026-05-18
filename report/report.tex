@@ -1,0 +1,147 @@
+% Speed-up compilation
+\documentclass[oneside,final]{hcmut-report-vi}
+\usepackage{codespace}
+
+% Draft watermark
+% https://github.com/callegar/LaTeX-draftwatermark
+
+% Encodings
+\usepackage{gensymb,textcomp}
+
+% Better tables
+% Wide tables go to https://tex.stackexchange.com/q/332902
+\usepackage{array,longtable,multicol,multirow,siunitx,tabularx}
+
+% Better enum
+\usepackage{enumitem}
+
+% Graphics
+\usepackage{caption,float}
+
+% Add options for figures, like max width, framing, etc.
+\usepackage[export]{adjustbox}
+
+% References
+% Use \Cref{} instead of \ref{}
+\usepackage[nameinlink]{cleveref}
+
+% FOR DEMONSTRATION PURPOSES, REMOVE IN PRODUCTION
+\usepackage{mwe}
+
+% Hyperlinks
+\usepackage{hyperref}
+
+\usepackage{tikz}
+\usetikzlibrary{positioning, arrows.meta, shadows, shapes.geometric}
+% Sub-preambles
+% https://github.com/MartinScharrer/standalone
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{booktabs}
+% Configurations
+\coursename{DSA-Extended}
+\reporttype{Báo cáo bài tập lớn (Mở rộng)}
+\title{PII-NER-ANONYMIZER}
+\advisor{Vương Bá Thịnh}
+\stuname{Trần Đình Ý & 2414100\\
+         & Trần Văn Minh Triết & 2413603\\
+         & Nguyễn Phúc Vĩnh & 2414001\\
+         & Nguyễn Đình Minh & 2412079}
+
+% ===================================================
+% NỘI DUNG CHÍNH
+% ===================================================
+\begin{document}
+
+% Trang bìa: không đánh số trang
+\coverpage
+\thispagestyle{empty}
+\clearpage
+
+\AtBeginDocument{\counterwithin{lstlisting}{section}}
+
+% ===================================================
+% PHẦN ĐẦU: đánh số La Mã i, ii, iii, ...
+% Theo quy định: các phần trước nội dung chính dùng i, ii, ...
+% ===================================================
+\pagestyle{plain}
+\pagenumbering{roman}
+\setcounter{page}{1}
+
+\input{chapters/abstract.tex}
+\clearpage
+
+\tableofcontents
+\clearpage
+
+\listoffigures
+\clearpage
+
+\listoftables
+\clearpage
+
+\lstlistoflistings
+\clearpage
+
+% ===================================================
+% PHÂN CÔNG NHIỆM VỤ: vẫn thuộc phần đầu, dùng số La Mã
+% ===================================================
+\subsection*{\centering PHÂN CÔNG NHIỆM VỤ VÀ KẾT QUẢ CỦA TỪNG THÀNH VIÊN}
+
+\begin{table}[H]
+    \centering
+    \renewcommand{\arraystretch}{1.5}
+    \begin{tabular}{|c|p{3.8cm}|p{2.4cm}|p{6.2cm}|p{1.8cm}|}
+        \hline
+        \textbf{STT} & \centering\textbf{HỌ VÀ TÊN}    & \centering\textbf{MSSV} & \centering\textbf{NHIỆM VỤ} & \centering\arraybackslash\textbf{KẾT QUẢ} \\
+        \hline
+        1
+                     & \centering Trần Văn Minh Triết
+                     & \centering 2413603
+                     & \centering None.
+                     & \centering\arraybackslash 100\%                                                                                                     \\
+        \hline
+        2
+                     & \centering Nguyễn Đình Minh
+                     & \centering 2412079
+                     & \centering None.
+                     & \centering\arraybackslash 100\%                                                                                                     \\
+        \hline
+        3
+                     & \centering Nguyễn Phúc Vĩnh
+                     & \centering 2414001
+                     & \centering None.
+                     & \centering\arraybackslash 100\%                                                                                                     \\
+        \hline
+        4
+                     & \centering Trần Đình Ý
+                     & \centering 2414100
+                     & \centering None.
+                     & \centering\arraybackslash 100\%                                                                                                     \\
+        \hline
+    \end{tabular}
+\end{table}
+
+\clearpage
+
+% ===================================================
+% NỘI DUNG CHÍNH: đánh số Ả Rập từ Chương 1
+% ===================================================
+\pagenumbering{arabic}
+\setcounter{page}{1}
+\pagestyle{fancy}
+
+\input{chapters/1_intro.tex}
+\clearpage
+
+\input{chapters/2_pipeline.tex}
+\clearpage
+
+\section{Thiết kế module}
+\input{chapters/3_2-3_3.tex}
+\clearpage
+
+\input{chapters/5_conclusion_future_work.tex}
+\clearpage
+
+\end{document}

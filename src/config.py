@@ -11,6 +11,8 @@ ENTITY_PRIORITY = [
     "PHONE",
     "DATE",
     "ADDRESS",
+    "ORGANIZATION",
+    "LOCATION",
     "NAME",
     "USERNAME",
 ]

@@ -31,6 +31,10 @@
     --entity-phone-bg: rgba(16, 185, 129, 0.15);
     --entity-address: #f97316;
     --entity-address-bg: rgba(249, 115, 22, 0.15);
+    --entity-organization: #14b8a6;
+    --entity-organization-bg: rgba(20, 184, 166, 0.15);
+    --entity-location: #38bdf8;
+    --entity-location-bg: rgba(56, 189, 248, 0.15);
     --entity-name: #ec4899;
     --entity-name-bg: rgba(236, 72, 153, 0.15);
     --entity-username: #8b5cf6;
@@ -392,6 +396,8 @@ main {
 .token.entity-URL     { color: var(--entity-url);      background: var(--entity-url-bg);      border: 1px solid rgba(6, 182, 212, 0.3); }
 .token.entity-PHONE   { color: var(--entity-phone);    background: var(--entity-phone-bg);    border: 1px solid rgba(16, 185, 129, 0.3); }
 .token.entity-ADDRESS { color: var(--entity-address);  background: var(--entity-address-bg);  border: 1px solid rgba(249, 115, 22, 0.3); }
+.token.entity-ORGANIZATION { color: var(--entity-organization); background: var(--entity-organization-bg); border: 1px solid rgba(20, 184, 166, 0.3); }
+.token.entity-LOCATION { color: var(--entity-location); background: var(--entity-location-bg); border: 1px solid rgba(56, 189, 248, 0.3); }
 .token.entity-NAME    { color: var(--entity-name);     background: var(--entity-name-bg);     border: 1px solid rgba(236, 72, 153, 0.3); }
 .token.entity-USERNAME{ color: var(--entity-username);  background: var(--entity-username-bg); border: 1px solid rgba(139, 92, 246, 0.3); }
 
@@ -524,6 +530,8 @@ main {
 .entity-badge-URL      { color: var(--entity-url);      background: var(--entity-url-bg); }
 .entity-badge-PHONE    { color: var(--entity-phone);    background: var(--entity-phone-bg); }
 .entity-badge-ADDRESS  { color: var(--entity-address);  background: var(--entity-address-bg); }
+.entity-badge-ORGANIZATION { color: var(--entity-organization); background: var(--entity-organization-bg); }
+.entity-badge-LOCATION { color: var(--entity-location); background: var(--entity-location-bg); }
 .entity-badge-NAME     { color: var(--entity-name);     background: var(--entity-name-bg); }
 .entity-badge-USERNAME { color: var(--entity-username);  background: var(--entity-username-bg); }
 

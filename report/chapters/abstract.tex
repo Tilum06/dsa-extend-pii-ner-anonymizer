@@ -1,0 +1,17 @@
+\begin{abstract}
+\phantomsection
+\addcontentsline{toc}{section}{\abstractname}
+Trong thời đại số hiện nay, lượng dữ liệu văn bản chứa thông tin cá nhân ngày càng gia tăng và được sử dụng rộng rãi trong nhiều hệ thống khác nhau như mạng xã hội, thương mại điện tử, giáo dục và y tế. Điều này làm cho việc bảo vệ dữ liệu cá nhân trở thành một yêu cầu quan trọng trong các ứng dụng xử lý ngôn ngữ tự nhiên. Một trong những hướng tiếp cận phổ biến là sử dụng Named Entity Recognition (NER) để phát hiện và ẩn danh các thông tin định danh cá nhân trong văn bản.
+
+Project này tập trung xây dựng một hệ thống nhận diện và ẩn danh thông tin cá nhân bằng phương pháp rule-based, không sử dụng machine learning hoặc deep learning. Hệ thống sử dụng các kỹ thuật xử lý chuỗi như regular expression, keyword matching, token scanning và context-based detection để phát hiện các thực thể quan trọng gồm \texttt{NAME}, \texttt{EMAIL}, \texttt{PHONE}, \texttt{ADDRESS}, \texttt{USERNAME} và \texttt{URL}. Sau khi phát hiện, các thông tin nhạy cảm sẽ được thay thế bằng các placeholder tương ứng nhằm giảm nguy cơ lộ dữ liệu cá nhân nhưng vẫn giữ được cấu trúc tổng quát của văn bản.
+
+Pipeline của hệ thống bao gồm các bước preprocessing dữ liệu, chuyển đổi BIO labels thành ground truth entities, phát hiện entity bằng regex, phát hiện entity bằng ngữ cảnh, xử lý overlap giữa các entity, thực hiện anonymization và đánh giá kết quả bằng Precision, Recall và F1-score. Dataset được sử dụng trong project là 
+\href{https://www.kaggle.com/datasets/alejopaullier/pii-external-dataset}{PII External Dataset} từ Kaggle,
+cung cấp dữ liệu văn bản cùng nhãn BIO phục vụ cho việc xây dựng ground truth và đánh giá kết quả của hệ thống.
+
+Hệ thống cho thấy khả năng phát hiện tương đối tốt đối với các thực thể có cấu trúc cố định như email, URL và số điện thoại. Đồng thời, project cũng thể hiện vai trò của các thuật toán xử lý chuỗi trong bài toán NER và bảo vệ dữ liệu cá nhân. Mặc dù vẫn còn một số hạn chế về khả năng tổng quát hóa và xử lý các ngữ cảnh phức tạp, hệ thống đã xây dựng được một pipeline tương đối hoàn chỉnh cho bài toán phát hiện và ẩn danh thông tin cá nhân trong văn bản.
+
+\textbf{Từ khóa:} Named Entity Recognition, PII Detection, Rule-based Method, Regular Expression, String Matching, Text Anonymization, Natural Language Processing.
+
+
+\end{abstract}

@@ -1,0 +1,368 @@
+% ================================================================
+% Các package cần cho phần này đã được khai báo trong preamble của report.tex:
+%   \usepackage{algorithm}
+%   \usepackage{algpseudocode}
+%   \usepackage{booktabs}
+% ================================================================
+
+% ================================================================
+\subsection{Nhận diện thực thể theo ngữ cảnh (Context Detector)}
+% ================================================================
+
+Thành phần nhận diện theo ngữ cảnh nhận đầu vào là một đoạn văn bản thô và
+trả về danh sách các thực thể có dạng \texttt{type}, \texttt{text},
+\texttt{start}, \texttt{end}. Khác với nhóm nhận diện bằng biểu thức chính quy,
+nhóm này không chỉ dựa vào cấu trúc ký tự cố định mà còn khai thác các từ khóa,
+vị trí xuất hiện, chữ hoa và quan hệ giữa các từ trong cùng câu.
+
+Các loại thực thể được xử lý gồm tên người (\texttt{NAME}), tổ chức
+(\texttt{ORGANIZATION}), địa điểm (\texttt{LOCATION}), tên người dùng
+(\texttt{USERNAME}) và địa chỉ (\texttt{ADDRESS}). Về mặt thuật toán, quá trình
+nhận diện được tổ chức theo luồng: chuẩn hóa ngữ cảnh đầu vào, sinh candidate,
+chấm điểm hoặc kiểm tra mẫu, sau đó trả về các span thực thể không chồng lấn.
+
+% ----------------------------------------------------------------
+\subsubsection{Nhận diện tên người, tổ chức và địa điểm}
+% ----------------------------------------------------------------
+
+Đầu vào của thuật toán là văn bản đã được chia thành các câu cùng với vị trí của
+từng câu trong văn bản gốc. Đầu ra là các span được gán một trong ba nhãn:
+\texttt{NAME}, \texttt{ORGANIZATION} hoặc \texttt{LOCATION}. Ba loại thực thể
+này đều có thể xuất hiện dưới dạng cụm danh từ riêng viết hoa, vì vậy hệ thống
+không chạy ba bộ phát hiện tách rời. Thay vào đó, thuật toán sinh candidate một
+lần, chấm điểm candidate đó theo cả ba nhãn, rồi quyết định nhãn cuối cùng ở
+bước sau cùng.
+
+Trước khi phân tích ngữ cảnh, văn bản đầu vào được tách thành các câu riêng
+lẻ. Đây là bước quan trọng vì điểm ngữ cảnh (pronoun, nghề nghiệp, trigger)
+chỉ có ý nghĩa trong phạm vi một câu.
+
+Thách thức chính là phân biệt dấu chấm kết thúc câu với dấu chấm trong các
+trường hợp khác. Thuật toán tách câu xử lý điều này theo quy tắc: dấu
+\texttt{.} chỉ được coi là ranh giới câu khi \textit{đồng thời} thỏa ba điều
+kiện:
+
+\begin{enumerate}[nosep]
+    \item Token kết thúc bằng \texttt{.} không thuộc danh sách viết tắt đã biết
+          (\texttt{Dr.}, \texttt{Mr.}, \texttt{St.}, \texttt{Apt.}, \texttt{Inc.}, v.v.).
+    \item Phần văn bản ngay sau \texttt{.} không bắt đầu bằng tên miền cấp cao
+          (\texttt{com}, \texttt{edu}, \texttt{vn}, \texttt{org}, v.v.) --- nhằm
+          tránh split nhầm địa chỉ email và URL.
+    \item Sau dấu \texttt{.} là khoảng trắng hoặc hết chuỗi.
+\end{enumerate}
+
+Dấu \texttt{!} và \texttt{?} luôn được coi là kết thúc câu vô điều kiện.
+
+\subsubsection*{Bước 1: xử lý trigger mạnh cho tên người}
+
+Thuật toán trước hết tìm các cụm từ báo hiệu trực tiếp rằng phần đứng sau là
+tên người. Các trigger này không tạo ra một luồng nhận diện riêng, mà được lưu
+như một tín hiệu điểm mạnh cho nhãn \texttt{NAME}. Trigger được chia thành hai
+nhóm:
+
+\begin{itemize}[nosep]
+    \item \textbf{NAME\_TRIGGERS}: cụm từ chỉ thẳng tên chủ thể, gồm
+          \texttt{"my name is"}, \texttt{"full name"}, \texttt{"name:"}.
+    \item \textbf{\_LABEL\_TRIGGERS}: nhãn hay đứng trước tên trong văn bản có
+          cấu trúc, gồm khoảng 25 mẫu như \texttt{"contact information:"},
+          \texttt{"author:"}, \texttt{"submitted by:"}, \texttt{"regards,"},
+          \texttt{"sincerely,"}, v.v.
+\end{itemize}
+
+Khi tìm thấy trigger, thuật toán thu thập 1--4 token liên tiếp thỏa:
+bắt đầu bằng chữ hoa, không chứa chữ số, không chứa ký tự đặc biệt (ngoại
+trừ dấu gạch ngang \texttt{-} vì tên có thể có dạng \texttt{Mary-Jane}),
+không phải stopword, và không mang đuôi động từ sau token đầu tiên
+(\texttt{-ing}, \texttt{-tion}, \texttt{-ed}, v.v.). Span tìm được sẽ nhận điểm
+\texttt{NAME} rất cao nếu trùng với candidate ở bước chấm điểm.
+
+\subsubsection*{Bước 2: tìm candidate bằng linear search và rule-based filtering}
+
+Với mỗi câu, thuật toán sinh các candidate danh từ riêng từ những cụm token viết
+hoa. Candidate được dùng chung cho cả ba nhãn \texttt{NAME},
+\texttt{ORGANIZATION} và \texttt{LOCATION}, thay vì viết lại ba hàm quét riêng.
+
+Một candidate hợp lệ phải bắt đầu bằng chữ hoa, không chứa chữ số, không chứa
+ký tự đặc biệt, không phải stopword, không phải đại từ, không phải từ mở đầu câu
+thường gặp, không phải title prefix và không phải chức danh công việc. Thuật
+toán cũng cho phép một số connector như \texttt{of}, \texttt{the},
+\texttt{and} để bắt các cụm như \texttt{University of California}.
+
+\subsubsection*{Bước 3: scoring candidate theo ba nhãn}
+
+Chương trình sử dụng thuật toán Heuristic Rule-Based Scoring để gán điểm cho mỗi candidate theo ba nhãn. Mỗi nhãn có một tập hợp các quy tắc riêng. Ví dụ: tần suất xuất hiện của các từ đặc biệt, cấu trúc cố định,$\dots$
+
+\subsubsection*{Output}
+Sau khi có đủ ba điểm, thuật toán chọn đúng một nhãn cuối cùng cho candidate.
+Nhãn có điểm cao nhất và đạt ngưỡng sẽ được giữ. Nếu nhiều nhãn bằng điểm,
+thuật toán dùng thứ tự tie-break ổn định để tránh một span được xuất ra nhiều
+lần với nhiều tag khác nhau. Vì vậy, một span như \texttt{OpenAI} trong câu
+\texttt{I work at OpenAI.} được quyết định là \texttt{ORGANIZATION}, không đồng
+thời xuất hiện thêm dưới dạng \texttt{NAME} hoặc \texttt{LOCATION}.
+
+Sau khi mỗi candidate đã có nhãn cuối cùng, hệ thống loại trùng và overlap theo
+priority nội bộ, điểm, vị trí bắt đầu và độ dài span trong phạm vi các kết quả
+do context detector sinh ra. Kết quả này vẫn có thể được đưa sang merger tổng
+thể để xử lý overlap với các thực thể từ regex detector.
+
+\begin{algorithm}[H]
+    \caption{Thuật toán nhận diện NAME, ORGANIZATION và LOCATION}
+    \label{alg:detect_context_entities}
+    \begin{algorithmic}[1]
+        \Require Văn bản đầu vào $T$
+        \Ensure Danh sách thực thể $E$
+
+        \State $E \leftarrow \emptyset$
+        \State $lower \leftarrow \text{lowercase}(T)$
+
+        \Statex \hspace{-\algorithmicindent}\textbf{// Bước 1: Ghi nhận trigger mạnh cho NAME}
+        \For{mỗi trigger $tr$ trong \textsc{NameTriggers} $\cup$ \textsc{LabelTriggers}}
+        \For{mỗi vị trí $pos$ của $tr$ trong $lower$}
+        \State Thu thập 1--4 token hoa liên tiếp sau $pos$ vào $tokens$
+        \If{$tokens \neq \emptyset$}
+        \State Lưu span $\text{join}(tokens)$ vào $strongNameSpans$ với điểm 100
+        \EndIf
+        \EndFor
+        \EndFor
+        \Statex \hspace{-\algorithmicindent}\textbf{// Bước 2--4: Candidate chung, scoring ba nhãn, chọn tag}
+        \State $sentences \leftarrow \textsc{SplitSentences}(T)$
+        \For{mỗi câu $s$ trong $sentences$}
+        \For{mỗi candidate $c$ trong \textsc{ExtractEntityCandidates}($s$)}
+        \State $nameScore \leftarrow \textsc{ScoreName}(c, s, strongNameSpans)$
+        \State $orgScore \leftarrow \textsc{ScoreOrganization}(c, s)$
+        \State $locScore \leftarrow \textsc{ScoreLocation}(c, s)$
+        \State $tag \leftarrow \textsc{ChooseBestTag}(nameScore, orgScore, locScore)$
+        \If{$tag$ tồn tại}
+        \State Thêm $c$ vào $E$ với nhãn $tag$ và điểm tương ứng
+        \EndIf
+        \EndFor
+        \EndFor
+
+        \State \Return $\textsc{ResolveEntities}(E)$
+    \end{algorithmic}
+\end{algorithm}
+
+% ----------------------------------------------------------------
+\subsubsection{Nhận diện địa chỉ}
+% ----------------------------------------------------------------
+
+Đầu vào của thuật toán nhận diện địa chỉ là văn bản gốc và danh sách span email
+đã được xác định trước. Đầu ra là các span \texttt{ADDRESS}. Địa chỉ trong tập
+dữ liệu thường tuân theo cấu trúc gồm số nhà, tên đường, loại đường, và hậu tố
+hướng hoặc đơn vị căn hộ tùy chọn. Thuật toán sử dụng hai cơ chế bổ sung cho
+nhau.
+
+\subsubsection*{Bước 1: nhận diện địa chỉ bằng Regex pattern}
+Biểu thức chính quy \texttt{\_ADDRESS\_RE} mô tả cấu trúc địa chỉ theo bốn
+thành phần nối tiếp:
+
+\begin{enumerate}[nosep]
+    \item \textbf{Số nhà}: \verb|\b(\d{1,5})(?!\d)\s+| ---
+          từ 1 đến 5 chữ số, kèm negative lookahead \verb|(?!\d)| để đảm
+          bảo đây không phải là một phần của số dài hơn (loại trừ số điện
+          thoại, mã bưu điện dài).
+
+    \item \textbf{Tên đường}: \verb|((?:[A-Z0-9][A-Za-z0-9]*\s+)+?)| ---
+          một hoặc nhiều từ bắt đầu bằng chữ hoa hoặc chữ số, sử dụng
+          non-greedy để nhường ưu tiên cho thành phần loại đường phía sau.
+
+    \item \textbf{Loại đường}: danh sách khoảng 30 từ được sắp xếp từ dài
+          đến ngắn để tránh match sớm, bao gồm dạng đầy đủ
+          (\texttt{Boulevard}, \texttt{Terrace}, \texttt{Avenue},
+          \texttt{Street}, \texttt{Drive}, \texttt{Road}, v.v.) và dạng viết
+          tắt (\texttt{Blvd.}, \texttt{Ave.}, \texttt{Rd.}, \texttt{St.}, v.v.).
+
+    \item \textbf{Hướng và đơn vị} (tùy chọn):
+          hướng gồm tám giá trị \texttt{North}, \texttt{South}, \texttt{East},
+          \texttt{West} và các tổ hợp; đơn vị gồm \texttt{Suite},
+          \texttt{Apt.}, \texttt{Apartment}, \texttt{Unit} kèm số phòng.
+\end{enumerate}
+
+Trước khi kiểm tra kết quả regex, tất cả span email trong văn bản được xác định
+trước; bất kỳ span địa chỉ nào nằm hoàn toàn bên trong span email sẽ bị bỏ qua
+để tránh nhầm lẫn phần tên miền của địa chỉ email với địa chỉ nhà.
+
+\subsubsection*{Bước 2: nhận diện địa chỉ bằng trigger keyword}
+Để bổ sung cho regex chính, đặc biệt với các địa chỉ được viết theo dạng nhãn
+hoặc clause theo trigger, module sử dụng danh sách
+trigger bao gồm \texttt{street}, \texttt{road}, \texttt{avenue},
+\texttt{district}, \texttt{city}, \texttt{st.}, \texttt{rd.}, \texttt{ave.}.
+Khi tìm thấy trigger, thuật toán chỉ tiếp tục nếu ngay sau trigger có dấu
+\texttt{:} hoặc cụm \texttt{is}. Sau đó hệ thống lấy clause đến dấu câu gần
+nhất, loại bỏ noise words đầu clause (\texttt{at}, \texttt{is},
+\texttt{the}, \texttt{located}, \texttt{live}, \texttt{reside}, v.v.), và kiểm
+tra thêm: số nhà ở đầu clause không được vượt quá 5 chữ số, span không nằm
+trong email, và span không được trùng lặp với kết quả từ cơ chế regex.
+
+\begin{algorithm}[H]
+    \caption{Thuật toán nhận diện địa chỉ}
+    \label{alg:detect_address}
+    \begin{algorithmic}[1]
+        \Require Văn bản đầu vào $T$
+        \Ensure Danh sách thực thể địa chỉ $E$
+
+        \State $E \leftarrow \emptyset$
+        \State $emailSpans \leftarrow \textsc{FindEmailSpans}(T)$
+
+        \Statex \hspace{-\algorithmicindent}\textbf{// Cơ chế 1: Regex pattern}
+        \For{mỗi match $m$ của \textsc{AddressRE} trong $T$}
+        \If{$m$ nằm trong một email span} \textbf{continue} \EndIf
+        \State Thêm span của $m$ vào $E$
+        \EndFor
+
+        \Statex \hspace{-\algorithmicindent}\textbf{// Cơ chế 2: Trigger keyword}
+        \For{mỗi trigger $tr$ trong \textsc{AddressTriggers}}
+        \For{mỗi vị trí $pos$ của $tr$ trong $T$}
+        \If{sau $tr$ không phải \texttt{:} hoặc \texttt{is}} \textbf{continue} \EndIf
+        \State $clause \leftarrow \textsc{ExtractClause}(T, pos)$
+        \State $addr \leftarrow \textsc{StripLeadingNoise}(clause)$
+        \If{số nhà đầu $addr$ có nhiều hơn 5 chữ số} \textbf{continue} \EndIf
+        \If{$addr$ nằm trong email span} \textbf{continue} \EndIf
+        \If{$addr$ overlap với span đã có trong $E$} \textbf{continue} \EndIf
+        \State Thêm span của $addr$ vào $E$
+        \EndFor
+        \EndFor
+
+        \State \Return $\textsc{Deduplicate}(E)$
+    \end{algorithmic}
+\end{algorithm}
+
+% ================================================================
+\subsection{Tổng hợp kết quả}
+% ================================================================
+
+Đầu vào của bước hợp nhất là nhiều danh sách thực thể được sinh ra từ các nhóm
+nhận diện khác nhau. Đầu ra là một danh sách duy nhất, đã loại trùng và không
+còn các span chồng lấn. Thuật toán hợp nhất là bước quyết định kết quả cuối
+cùng trước khi văn bản được mã hoá.
+
+\subsubsection{Vấn đề overlap}
+
+Hai thực thể được coi là \textit{chồng lấn} (overlap) nếu khoảng ký tự của
+chúng giao nhau, tức là $[s_1, e_1)$ và $[s_2, e_2)$ thỏa $s_1 < e_2$ và
+$e_1 > s_2$. Overlap xảy ra trong nhiều tình huống thực tế:
+
+\begin{itemize}[nosep]
+    \item Địa chỉ email \texttt{kazuosun@hotmail.net} bị regex\_detector bắt
+          đúng là \texttt{EMAIL}, trong khi các detector khác có thể tạo span
+          chồng lấn trên một phần của chuỗi này.
+    \item Một chuỗi như \texttt{123 Main Street} có thể được nhận là
+          \texttt{ADDRESS}, đồng thời phần \texttt{Main Street} cũng có thể
+          được nhận là \texttt{LOCATION}.
+    \item Một cụm như \texttt{OpenAI Research Lab} có thể được chấm điểm theo
+          nhiều nhãn ngữ cảnh; khi đó detector cần chọn một nhãn cuối cùng
+          trước khi đưa kết quả sang bước hợp nhất.
+\end{itemize}
+
+\subsubsection{Hệ thống ưu tiên}
+
+Để giải quyết overlap một cách nhất quán, merger định nghĩa một thứ tự ưu tiên
+tuyến tính cho tám loại thực thể:
+
+\begin{center}
+    \texttt{EMAIL} $>$ \texttt{URL} $>$ \texttt{PHONE} $>$
+    \texttt{ADDRESS} $>$ \texttt{ORGANIZATION} $>$ \texttt{LOCATION} $>$
+    \texttt{NAME} $>$ \texttt{USERNAME}
+\end{center}
+
+Thứ tự này phản ánh độ tin cậy của từng detector: \texttt{EMAIL}, \texttt{URL}
+và \texttt{PHONE} được phát hiện bằng regex có độ chính xác cao và cấu trúc
+rõ ràng nên được ưu tiên hơn; \texttt{ADDRESS} thắng \texttt{LOCATION} để tránh
+mất địa chỉ đầy đủ; \texttt{ORGANIZATION}, \texttt{LOCATION}, \texttt{NAME} và
+\texttt{USERNAME} dựa nhiều hơn vào ngữ cảnh nên được xếp sau các entity có cấu
+trúc rõ.
+
+\subsubsection{Thuật toán Greedy Priority-First}
+
+Thuật toán hợp nhất thực hiện giải quyết overlap theo chiến lược tham lam ưu
+tiên (greedy priority-first):
+
+\begin{enumerate}[nosep]
+    \item Gộp tất cả thực thể từ mọi detector thành một danh sách duy nhất.
+    \item Sắp xếp danh sách theo ba tiêu chí lần lượt: (a)~thứ hạng ưu tiên
+          tăng dần (loại ưu tiên cao xếp trước), (b)~chỉ số \texttt{start}
+          tăng dần, (c)~độ dài span giảm dần (span dài hơn xếp trước khi cùng
+          điểm xuất phát).
+    \item Duyệt tuần tự qua danh sách đã sắp xếp. Với mỗi thực thể, giữ lại
+          nếu span của nó không chồng lấn với bất kỳ thực thể đã giữ nào;
+          bỏ qua nếu ngược lại.
+    \item Sắp xếp lại danh sách kết quả theo \texttt{start} để đảm bảo thứ tự
+          xuất hiện trong văn bản.
+\end{enumerate}
+
+\begin{algorithm}[H]
+    \caption{Thuật toán hợp nhất và giải quyết overlap (Greedy Priority-First)}
+    \label{alg:merger}
+    \begin{algorithmic}[1]
+        \Require Các nhóm thực thể $G_1, G_2, \ldots, G_k$ từ các detector
+        \Ensure Danh sách thực thể không overlap, sắp theo vị trí
+
+        \State $all \leftarrow G_1 \cup G_2 \cup \cdots \cup G_k$
+
+        \State Sắp xếp $all$ theo $\bigl(\text{priority}(type),\ start,\ -(end - start)\bigr)$ tăng dần
+
+        \State $kept \leftarrow \emptyset$
+        \State $occupied \leftarrow \emptyset$ \quad \textit{// Tập các span $(s, e)$ đã giữ}
+
+        \For{mỗi thực thể $ent$ trong $all$}
+        \State $s \leftarrow ent.start$,\quad $e \leftarrow ent.end$
+        \If{$\nexists\, (os, oe) \in occupied$ sao cho $s < oe$ và $e > os$}
+        \State $kept \leftarrow kept \cup \{ent\}$
+        \State $occupied \leftarrow occupied \cup \{(s, e)\}$
+        \EndIf
+        \EndFor
+
+        \State Sắp xếp $kept$ theo $start$ tăng dần
+        \State \Return $kept$
+    \end{algorithmic}
+\end{algorithm}
+
+\subsubsection{Minh họa trường hợp overlap}
+
+Xét đoạn văn bản sau:
+
+\begin{center}
+    \textit{``I live at 123 Main Street.''}
+\end{center}
+
+Trong đoạn này, \texttt{ADDRESS} và \texttt{LOCATION} có thể cùng nhận diện
+vùng văn bản liên quan đến \texttt{Main Street}. Danh sách trước khi hợp nhất
+có dạng như Bảng~\ref{tab:overlap_before}.
+
+\begin{table}[H]
+    \centering
+    \caption{Danh sách thực thể trước khi hợp nhất}
+    \label{tab:overlap_before}
+    \renewcommand{\arraystretch}{1.3}
+    \begin{tabular}{l l l c}
+        \toprule
+        \textbf{Detector} & \textbf{Loại}     & \textbf{Text}            & \textbf{Ưu tiên} \\
+        \midrule
+        context\_detector & \texttt{ADDRESS}  & \texttt{123 Main Street} & 4                \\
+        context\_detector & \texttt{LOCATION} & \texttt{Main Street}     & 6                \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+Sau khi sắp xếp theo ưu tiên và áp dụng thuật toán greedy, merger giữ
+\texttt{123 Main Street} vì \texttt{ADDRESS} có priority cao hơn
+\texttt{LOCATION}. Candidate \texttt{Main Street} bị loại do overlap với span
+địa chỉ đầy đủ đã được giữ.
+Kết quả cuối cùng được trình bày trong Bảng~\ref{tab:overlap_after}.
+
+\begin{table}[H]
+    \centering
+    \caption{Danh sách thực thể sau khi hợp nhất}
+    \label{tab:overlap_after}
+    \renewcommand{\arraystretch}{1.3}
+    \begin{tabular}{l l l}
+        \toprule
+        \textbf{Loại}    & \textbf{Text}            & \textbf{Vị trí}  \\
+        \midrule
+        \texttt{ADDRESS} & \texttt{123 Main Street} & start=10, end=25 \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+Kết quả này sau đó được đưa vào module \texttt{anonymizer} để thay thế các
+span PII bằng placeholder tương ứng, tạo ra văn bản đã được ẩn danh hóa.
