@@ -2,6 +2,7 @@
 
 Named Entity Recognition, được viết tắt là NER, là một bài toán quan trọng trong lĩnh vực xử lý ngôn ngữ tự nhiên. Mục tiêu chính của NER là phát hiện và phân loại các thực thể có ý nghĩa trong văn bản, chẳng hạn như tên người, địa điểm, tổ chức, email, số điện thoại, địa chỉ, tên tài khoản hoặc đường dẫn URL. Thay vì chỉ xem văn bản như một chuỗi ký tự thông thường, NER giúp hệ thống hiểu được những thành phần nào trong văn bản mang thông tin quan trọng và chúng thuộc loại nào.
 
+
 Trong thực tế, NER được ứng dụng trong nhiều bài toán khác nhau. Ví dụ, trong hệ thống tìm kiếm thông tin, NER giúp trích xuất tên người, địa danh hoặc tổ chức để cải thiện độ chính xác khi truy vấn. Trong lĩnh vực chăm sóc khách hàng, NER có thể dùng để nhận diện thông tin đơn hàng, địa chỉ giao hàng hoặc số điện thoại của người dùng. Trong các hệ thống quản lý tài liệu, NER hỗ trợ tự động phân loại và trích xuất thông tin quan trọng từ văn bản. Đặc biệt, đối với bài toán bảo vệ dữ liệu cá nhân, NER có vai trò phát hiện các thông tin định danh cá nhân, từ đó phục vụ cho việc ẩn danh hoặc che giấu dữ liệu nhạy cảm trước khi lưu trữ, chia sẻ hoặc xử lý tiếp.
 
 Trong phạm vi project này, bài toán được tập trung vào việc nhận diện và ẩn danh thông tin cá nhân trong văn bản. Các loại thông tin cần phát hiện bao gồm \texttt{NAME}, \texttt{EMAIL}, \texttt{PHONE}, \texttt{ADDRESS}, \texttt{USERNAME} và \texttt{URL}. Đây là những dạng dữ liệu có khả năng định danh trực tiếp hoặc gián tiếp một cá nhân. Ví dụ, một đoạn văn bản như:
