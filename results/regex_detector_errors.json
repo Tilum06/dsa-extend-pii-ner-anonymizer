@@ -1,0 +1,2374 @@
+[
+  {
+    "sample_id": "1073d46f-2241-459b-ab01-851be8d26436",
+    "text": "My name is Aaliyah Popova, and I am a jeweler with 13 years of experience. I remember a very unique and challenging project I had to work on last year. A customer approached me with a precious family heirloom - a diamond necklace that had been passed down through generations. Unfortunately, the necklace was in poor condition, with several loose diamonds and a broken clasp. The customer wanted me to restore it to its former glory, but it was clear that this would be no ordinary repair. Using my s",
+    "false_positives": [
+      {
+        "type": "EMAIL",
+        "text": "aaliyah.popova4783@aol.edu",
+        "start": 1642,
+        "end": 1668
+      }
+    ],
+    "false_negatives": [
+      {
+        "type": "EMAIL",
+        "text": "aaliyah.popova4783@aol.edu.",
+        "start": 1642,
+        "end": 1669
+      }
+    ],
+    "predicted_entities": [
+      {
+        "type": "PHONE",
+        "text": "(95) 94215-7906",
+        "start": 1611,
+        "end": 1626
+      },
+      {
+        "type": "EMAIL",
+        "text": "aaliyah.popova4783@aol.edu",
+        "start": 1642,
+        "end": 1668
+      }
+    ],
+    "ground_truth_entities": [
+      {
+        "type": "PHONE",
+        "text": "(95) 94215-7906",
+        "start": 1611,
+        "end": 1626
+      },
+      {
+        "type": "EMAIL",
+        "text": "aaliyah.popova4783@aol.edu.",
+        "start": 1642,
+        "end": 1669
+      }
+    ]
+  },
+  {
+    "sample_id": "5ec717a9-17ee-48cd-9d76-30ae256c9354",
+    "text": "My name is Konstantin Becker, and I'm a developer with two years of experience. I recently worked on a project where we built a new customer portal for our company. The goal was to create a more user-friendly and intuitive interface that would make it easier for customers to manage their accounts and access information. We started by gathering requirements from our customers and conducting user research to understand their needs and pain points. We then designed a new user interface that was bot",
+    "false_positives": [],
+    "false_negatives": [
+      {
+        "type": "PHONE",
+        "text": "0475 4429797.",
+        "start": 1423,
+        "end": 1436
+      }
+    ],
+    "predicted_entities": [
+      {
+        "type": "EMAIL",
+        "text": "konstantin.becker@gmail.com",
+        "start": 1372,
+        "end": 1399
+      }
+    ],
+    "ground_truth_entities": [
+      {
+        "type": "EMAIL",
+        "text": "konstantin.becker@gmail.com",
+        "start": 1372,
+        "end": 1399
+      },
+      {
+        "type": "PHONE",
+        "text": "0475 4429797.",
+        "start": 1423,
+        "end": 1436
+      }
+    ]
+  },
+  {
+    "sample_id": "9324ee01-7bdc-41b1-a7a5-01307f72c20d",
+    "text": "My name is Kazuo Sun, and I'm an air traffic controller with seven years of experience. I've always been fascinated by aviation, and I love the challenge of keeping planes safe and on time. One of the most memorable projects I worked on was a major upgrade to our airport's radar system. The old system was outdated and prone to breakdowns, and it was becoming increasingly difficult to keep up with the growing number of flights. I was assigned to the team that was responsible for planning and impl",
+    "false_positives": [
+      {
+        "type": "EMAIL",
+        "text": "kazuosun@hotmail.net",
+        "start": 1466,
+        "end": 1486
+      }
+    ],
+    "false_negatives": [
+      {
+        "type": "PHONE",
+        "text": "0304 2215930",
+        "start": 1438,
+        "end": 1450
+      },
+      {
+        "type": "EMAIL",
+        "text": "kazuosun@hotmail.net.",
+        "start": 1466,
+        "end": 1487
+      }
+    ],
+    "predicted_entities": [
+      {
+        "type": "EMAIL",
+        "text": "kazuosun@hotmail.net",
+        "start": 1466,
+        "end": 1486
+      }
+    ],
+    "ground_truth_entities": [
+      {
+        "type": "PHONE",
+        "text": "0304 2215930",
+        "start": 1438,
+        "end": 1450
+      },
+      {
+        "type": "EMAIL",
+        "text": "kazuosun@hotmail.net.",
+        "start": 1466,
+        "end": 1487
+      }
+    ]
+  },
+  {
+    "sample_id": "13166f5c-6f4a-4047-90b8-52599e98f221",
+    "text": "Baha Hoffman, a skilled and experienced lawyer, undertook a significant job-related project in the past that showcased his legal expertise and commitment to justice. The project involved a complex commercial dispute between two major corporations, which required careful analysis, negotiation, and strategic decision-making. Baha's role in the project was multifaceted. He began by conducting a thorough investigation into the case, gathering evidence, and interviewing key witnesses. His attention t",
+    "false_positives": [
+      {
+        "type": "EMAIL",
+        "text": "bahahoffman@yahoo.net",
+        "start": 2045,
+        "end": 2066
+      }
+    ],
+    "false_negatives": [
+      {
+        "type": "EMAIL",
+        "text": "bahahoffman@yahoo.net.",
+        "start": 2045,
+        "end": 2067
+      }
+    ],
+    "predicted_entities": [
+      {
+        "type": "PHONE",
+        "text": "+27 68 670 7513",
+        "start": 2013,
+        "end": 2028
+      },
+      {
+        "type": "EMAIL",
+        "text": "bahahoffman@yahoo.net",
+        "start": 2045,
+        "end": 2066
+      }
+    ],
+    "ground_truth_entities": [
+      {
+        "type": "PHONE",
+        "text": "+27 68 670 7513",
+        "start": 2013,
+        "end": 2028
+      },
+      {
+        "type": "EMAIL",
+        "text": "bahahoffman@yahoo.net.",
+        "start": 2045,
+        "end": 2067
+      }
+    ]
+  },
+  {
+    "sample_id": "88db5573-f453-4dff-a6b1-362eb469bf2f",
+    "text": "From the moment I was born, on a beautiful summer's day in the vibrant city of São Paulo, Brazil, I was destined to embark on an extraordinary journey. My name is Natalia Gross, and my life has been a tapestry of diverse experiences, woven with threads of resilience, passion, and unwavering determination. I spent my formative years exploring the bustling streets of my hometown, absorbing its rich culture and vibrant energy. With an unyielding thirst for knowledge, I pursued my education, delving",
+    "false_positives": [
+      {
+        "type": "PHONE",
+        "text": "(98) 96894-7830",
+        "start": 1813,
+        "end": 1828
+      }
+    ],
+    "false_negatives": [
+      {
+        "type": "PHONE",
+        "text": "(98) 96894-7830.",
+        "start": 1813,
+        "end": 1829
+      }
+    ],
+    "predicted_entities": [
+      {
+        "type": "EMAIL",
+        "text": "nataliagross@aol.org",
+        "start": 1789,
+        "end": 1809
+      },
+      {
+        "type": "PHONE",
+        "text": "(98) 96894-7830",
+        "start": 1813,
+        "end": 1828
+      }
+    ],
+    "ground_truth_entities": [
+      {
+        "type": "EMAIL",
+        "text": "nataliagross@aol.org",
+        "start": 1789,
+        "end": 1809
+      },
+      {
+        "type": "PHONE",
+        "text": "(98) 96894-7830.",
+        "start": 1813,
+        "end": 1829
+      }
+    ]
+  },
+  {
+    "sample_id": "8c9c705b-b073-48d4-80c4-b6b123d691c3",
+    "text": "My name is Alexander Tanaka, and I'm a saleswoman with a year of experience. I recently completed a project that involved developing and implementing a new sales strategy for my company. I started by analyzing our current sales data to identify areas where we could improve. I found that we were losing a lot of potential customers because our sales process was too complicated and time-consuming. So, I streamlined the process and made it easier for customers to make purchases. I also created a new",
+    "false_positives": [
+      {
+        "type": "EMAIL",
+        "text": "alexandertanaka@hotmail.net",
+        "start": 1222,
+        "end": 1249
+      }
+    ],
+    "false_negatives": [
+      {
+        "type": "EMAIL",
+        "text": "alexandertanaka@hotmail.net.",
+        "start": 1222,
+        "end": 1250
+      }
+    ],
+    "predicted_entities": [
+      {
+        "type": "PHONE",
+        "text": "+86 10746 1491",
+        "start": 1204,
+        "end": 1218
+      },
+      {
+        "type": "EMAIL",
+        "text": "alexandertanaka@hotmail.net",
+        "start": 1222,
+        "end": 1249
+      }
+    ],
+    "ground_truth_entities": [
+      {
+        "type": "PHONE",
+        "text": "+86 10746 1491",
+        "start": 1204,
+        "end": 1218
+      },
+      {
+        "type": "EMAIL",
+        "text": "alexandertanaka@hotmail.net.",
+        "start": 1222,
+        "end": 1250
+      }
+    ]
+  },
+  {
+    "sample_id": "a9c3689c-951d-4f25-a9d7-8b3c8721305a",
+    "text": "Hi, I'm Ashok Ma, a software developer at a tech company. Recently, I encountered a challenging issue that required my expertise. Our software application was experiencing intermittent crashes, leading to user dissatisfaction and potential business impact. The problem seemed random, making it difficult to pinpoint the root cause. I delved into the codebase, analyzing logs, and conducting rigorous testing to isolate the issue. I identified a memory leak in a specific module that caused the applic",
+    "false_positives": [
+      {
+        "type": "EMAIL",
+        "text": "ashokma5698@msn.net",
+        "start": 1007,
+        "end": 1026
+      },
+      {
+        "type": "URL",
+        "text": "https://www.ashok-ma.com/news",
+        "start": 1093,
+        "end": 1122
+      }
+    ],
+    "false_negatives": [
+      {
+        "type": "EMAIL",
+        "text": "ashokma5698@msn.net.",
+        "start": 1007,
+        "end": 1027
+      },
+      {
+        "type": "URL",
+        "text": "(https://www.ashok-ma.com/news)",
+        "start": 1092,
+        "end": 1123
+      }
+    ],
+    "predicted_entities": [
+      {
+        "type": "EMAIL",
+        "text": "ashokma5698@msn.net",
+        "start": 1007,
+        "end": 1026
+      },
+      {
+        "type": "URL",
+        "text": "https://www.ashok-ma.com/news",
+        "start": 1093,
+        "end": 1122
+      }
+    ],
+    "ground_truth_entities": [
+      {
+        "type": "EMAIL",
+        "text": "ashokma5698@msn.net.",
+        "start": 1007,
+        "end": 1027
+      },
+      {
+        "type": "URL",
+        "text": "(https://www.ashok-ma.com/news)",
+        "start": 1092,
+        "end": 1123
+      }
+    ]
+  },
+  {
+    "sample_id": "2be62b7b-6961-470e-8434-8de7c3543ed8",
+    "text": "Aiguo Martin, a dedicated and resourceful police officer, embarked on a remarkable project that left a lasting impact on his community. The project, aptly named \"Operation Safe Haven,\" aimed to address the growing issue of missing persons in his jurisdiction. With determination and unwavering commitment, Aiguo Martin set out to make a difference. Drawing upon his extensive experience in law enforcement, Aiguo Martin meticulously analyzed past cases of missing persons, identifying patterns and po",
+    "false_positives": [
+      {
+        "type": "EMAIL",
+        "text": "aiguo-martin@hotmail.com",
+        "start": 2507,
+        "end": 2531
+      },
+      {
+        "type": "PHONE",
+        "text": "+91-39941 98087",
+        "start": 2576,
+        "end": 2591
+      }
+    ],
+    "false_negatives": [
+      {
+        "type": "EMAIL",
+        "text": "aiguo-martin@hotmail.com,",
+        "start": 2507,
+        "end": 2532
+      },
+      {
+        "type": "PHONE",
+        "text": "+91-39941 98087.",
+        "start": 2576,
+        "end": 2592
+      }
+    ],
+    "predicted_entities": [
+      {
+        "type": "EMAIL",
+        "text": "aiguo-martin@hotmail.com",
+        "start": 2507,
+        "end": 2531
+      },
+      {
+        "type": "PHONE",
+        "text": "+91-39941 98087",
+        "start": 2576,
+        "end": 2591
+      }
+    ],
+    "ground_truth_entities": [
+      {
+        "type": "EMAIL",
+        "text": "aiguo-martin@hotmail.com,",
+        "start": 2507,
+        "end": 2532
+      },
+      {
+        "type": "PHONE",
+        "text": "+91-39941 98087.",
+        "start": 2576,
+        "end": 2592
+      }
+    ]
+  },
+  {
+    "sample_id": "6aa5d5a9-17e9-4819-af67-a53aed2bb41d",
+    "text": "In the bustling metropolis of Shanghai, there exists an individual known as Ram Luo, a highly accomplished salesforce analyst renowned for his analytical acumen and strategic prowess. With a phone number of +86 17610 3742, he has established a reputation for delivering exceptional results, leaving an indelible mark on the business landscape. One project that exemplifies Ram Luo's extraordinary capabilities involved a comprehensive analysis of a multinational corporation's sales performance. Leve",
+    "false_positives": [
+      {
+        "type": "PHONE",
+        "text": "+86 17610 3742",
+        "start": 207,
+        "end": 221
+      }
+    ],
+    "false_negatives": [
+      {
+        "type": "PHONE",
+        "text": "+86 17610 3742,",
+        "start": 207,
+        "end": 222
+      }
+    ],
+    "predicted_entities": [
+      {
+        "type": "PHONE",
+        "text": "+86 17610 3742",
+        "start": 207,
+        "end": 221
+      }
+    ],
+    "ground_truth_entities": [
+      {
+        "type": "PHONE",
+        "text": "+86 17610 3742,",
+        "start": 207,
+        "end": 222
+      }
+    ]
+  },
+  {
+    "sample_id": "58ab7247-5aee-427d-94b5-4135ff64a41f",
+    "text": "As a seasoned barber with 18 years of experience, I can vividly recall a job-related project that stands out as a testament to my dedication to the craft. I'm Shen Ma, and you can reach me at (48) 96198-7145 or via email at shenma@aol.gov. My passion for hair styling and grooming has been a driving force throughout my career. It all started when a regular client, a prominent businessman named Mr. Harrison, expressed his desire for a transformative haircut and beard trim that would elevate his pr",
+    "false_positives": [
+      {
+        "type": "EMAIL",
+        "text": "shenma@aol.gov",
+        "start": 224,
+        "end": 238
+      }
+    ],
+    "false_negatives": [
+      {
+        "type": "EMAIL",
+        "text": "shenma@aol.gov.",
+        "start": 224,
+        "end": 239
+      }
+    ],
+    "predicted_entities": [
+      {
+        "type": "PHONE",
+        "text": "(48) 96198-7145",
+        "start": 192,
+        "end": 207
+      },
+      {
+        "type": "EMAIL",
+        "text": "shenma@aol.gov",
+        "start": 224,
+        "end": 238
+      }
+    ],
+    "ground_truth_entities": [
+      {
+        "type": "PHONE",
+        "text": "(48) 96198-7145",
+        "start": 192,
+        "end": 207
+      },
+      {
+        "type": "EMAIL",
+        "text": "shenma@aol.gov.",
+        "start": 224,
+        "end": 239
+      }
+    ]
+  },
+  {
+    "sample_id": "aa294fcc-bb6e-43cb-8711-3112bbe56a94",
+    "text": "My name is Phillip Martinez, and I would like to share some aspects of my life's journey with you. I have had the pleasure of living in various places throughout my life, but I currently reside at 4537 Tanglewood Trail. My interest in community service began when I volunteered at a local soup kitchen. It was a truly eye-opening experience that made me realize the importance of helping those in need. Since then, I have dedicated myself to making a difference in my community. I have served on seve",
+    "false_positives": [
+      {
+        "type": "PHONE",
+        "text": "+86 19144 1648",
+        "start": 1738,
+        "end": 1752
+      }
+    ],
+    "false_negatives": [
+      {
+        "type": "PHONE",
+        "text": "+86 19144 1648.",
+        "start": 1738,
+        "end": 1753
+      }
+    ],
+    "predicted_entities": [
+      {
+        "type": "EMAIL",
+        "text": "phillip-martinez@outlook.com",
+        "start": 1694,
+        "end": 1722
+      },
+      {
+        "type": "PHONE",
+        "text": "+86 19144 1648",
+        "start": 1738,
+        "end": 1752
+      }
+    ],
+    "ground_truth_entities": [
+      {
+        "type": "EMAIL",
+        "text": "phillip-martinez@outlook.com",
+        "start": 1694,
+        "end": 1722
+      },
+      {
+        "type": "PHONE",
+        "text": "+86 19144 1648.",
+        "start": 1738,
+        "end": 1753
+      }
+    ]
+  },
+  {
+    "sample_id": "1700e0e9-3b40-47dc-8ff9-d03956c49b9e",
+    "text": "Hello, my name is Aiguo Ma, and I am an aspiring writer and avid traveler. I have always been fascinated by the world around me, and I love to explore new places and meet new people. I am also passionate about writing, and I enjoy sharing my experiences with others through my stories. My journey as a writer began in my early childhood when I discovered the magic of books. I spent countless hours lost in the worlds created by my favorite authors, and I knew that I wanted to do the same for others",
+    "false_positives": [
+      {
+        "type": "EMAIL",
+        "text": "aiguoma@hotmail.org",
+        "start": 1712,
+        "end": 1731
+      }
+    ],
+    "false_negatives": [
+      {
+        "type": "EMAIL",
+        "text": "aiguoma@hotmail.org.",
+        "start": 1712,
+        "end": 1732
+      }
+    ],
+    "predicted_entities": [
+      {
+        "type": "URL",
+        "text": "https://www.aiguo_ma.net/blog.jsp",
+        "start": 1598,
+        "end": 1631
+      },
+      {
+        "type": "EMAIL",
+        "text": "aiguoma@hotmail.org",
+        "start": 1712,
+        "end": 1731
+      }
+    ],
+    "ground_truth_entities": [
+      {
+        "type": "URL",
+        "text": "https://www.aiguo_ma.net/blog.jsp",
+        "start": 1598,
+        "end": 1631
+      },
+      {
+        "type": "EMAIL",
+        "text": "aiguoma@hotmail.org.",
+        "start": 1712,
+        "end": 1732
+      }
+    ]
+  },
+  {
+    "sample_id": "7834411f-b88d-44ec-a69a-ef5bb5f401cb",
+    "text": "My name is Chen Pan and I've been a plumber for the past 15 years. In that time, I've seen just about everything that can go wrong with a plumbing system. But one job that really stands out in my mind is the time I was called to fix a leak in a water main. It was a cold and rainy day in January, and I was working on a repair at a local business when I got a call from the water company. They told me that there was a leak in a water main near the intersection of Main Street and Elm Street, and tha",
+    "false_positives": [
+      {
+        "type": "URL",
+        "text": "www.chen-pan.edu/news",
+        "start": 1556,
+        "end": 1577
+      }
+    ],
+    "false_negatives": [
+      {
+        "type": "URL",
+        "text": "www.chen-pan.edu/news.",
+        "start": 1556,
+        "end": 1578
+      }
+    ],
+    "predicted_entities": [
+      {
+        "type": "EMAIL",
+        "text": "chenpan18@aol.edu",
+        "start": 1433,
+        "end": 1450
+      },
+      {
+        "type": "URL",
+        "text": "www.chen-pan.edu/news",
+        "start": 1556,
+        "end": 1577
+      }
+    ],
+    "ground_truth_entities": [
+      {
+        "type": "EMAIL",
+        "text": "chenpan18@aol.edu",
+        "start": 1433,
+        "end": 1450
+      },
+      {
+        "type": "URL",
+        "text": "www.chen-pan.edu/news.",
+        "start": 1556,
+        "end": 1578
+      }
+    ]
+  },
+  {
+    "sample_id": "c6097591-e952-4323-92aa-1196df7ad788",
+    "text": "My name is Yoko McCallister, and I have been a resident of 17372 Crestview Road for over two decades. If you ever need to reach me, you can give me a call at 0139 257 342 or send an email to yokomccallister@hotmail.gov. I have always had a passion for writing, and I love to share my stories with others. I started writing when I was young, and I have been honing my craft ever since. I am always looking for new ways to improve my writing, and I am always open to feedback. I have written several sh",
+    "false_positives": [
+      {
+        "type": "EMAIL",
+        "text": "yokomccallister@hotmail.gov",
+        "start": 191,
+        "end": 218
+      }
+    ],
+    "false_negatives": [
+      {
+        "type": "EMAIL",
+        "text": "yokomccallister@hotmail.gov.",
+        "start": 191,
+        "end": 219
+      }
+    ],
+    "predicted_entities": [
+      {
+        "type": "PHONE",
+        "text": "0139 257 342",
+        "start": 158,
+        "end": 170
+      },
+      {
+        "type": "EMAIL",
+        "text": "yokomccallister@hotmail.gov",
+        "start": 191,
+        "end": 218
+      }
+    ],
+    "ground_truth_entities": [
+      {
+        "type": "PHONE",
+        "text": "0139 257 342",
+        "start": 158,
+        "end": 170
+      },
+      {
+        "type": "EMAIL",
+        "text": "yokomccallister@hotmail.gov.",
+        "start": 191,
+        "end": 219
+      }
+    ]
+  },
+  {
+    "sample_id": "b53e37da-6e75-4491-8062-1c93577e7da5",
+    "text": "Tadashi Dong, a skilled and experienced optician, embarked on a notable project that showcased his expertise and dedication to providing exceptional eye care services. Tadashi was approached by a local community center seeking his assistance in conducting free eye examinations for underprivileged individuals in their neighborhood. Recognizing the importance of vision care and its impact on overall well-being, Tadashi enthusiastically accepted the project. Working closely with the community cente",
+    "false_positives": [
+      {
+        "type": "PHONE",
+        "text": "0186 704 2983",
+        "start": 2049,
+        "end": 2062
+      },
+      {
+        "type": "EMAIL",
+        "text": "tadashidong@gmail.edu",
+        "start": 2083,
+        "end": 2104
+      }
+    ],
+    "false_negatives": [
+      {
+        "type": "PHONE",
+        "text": "0186 704 2983,",
+        "start": 2049,
+        "end": 2063
+      },
+      {
+        "type": "EMAIL",
+        "text": "tadashidong@gmail.edu,",
+        "start": 2083,
+        "end": 2105
+      }
+    ],
+    "predicted_entities": [
+      {
+        "type": "PHONE",
+        "text": "0186 704 2983",
+        "start": 2049,
+        "end": 2062
+      },
+      {
+        "type": "EMAIL",
+        "text": "tadashidong@gmail.edu",
+        "start": 2083,
+        "end": 2104
+      }
+    ],
+    "ground_truth_entities": [
+      {
+        "type": "PHONE",
+        "text": "0186 704 2983,",
+        "start": 2049,
+        "end": 2063
+      },
+      {
+        "type": "EMAIL",
+        "text": "tadashidong@gmail.edu,",
+        "start": 2083,
+        "end": 2105
+      }
+    ]
+  },
+  {
+    "sample_id": "cb025cbe-0795-4d9a-9b98-6f516cc106ec",
+    "text": "In my line of work as a police officer with a decade of experience, I've encountered countless situations that have tested my skills and pushed me to think on my feet. One particular case that stands out occurred a few years ago when I was assigned to investigate a series of burglaries that had plagued our community. As I delved into the case, I discovered a pattern in the crimes: each break-in occurred late at night, targeting homes in upscale neighborhoods. Determined to apprehend the perpetra",
+    "false_positives": [
+      {
+        "type": "EMAIL",
+        "text": "richter@gmail.gov",
+        "start": 1978,
+        "end": 1995
+      }
+    ],
+    "false_negatives": [],
+    "predicted_entities": [
+      {
+        "type": "PHONE",
+        "text": "+86 19740 2520",
+        "start": 1936,
+        "end": 1950
+      },
+      {
+        "type": "EMAIL",
+        "text": "richter@gmail.gov",
+        "start": 1978,
+        "end": 1995
+      }
+    ],
+    "ground_truth_entities": [
+      {
+        "type": "PHONE",
+        "text": "+86 19740 2520",
+        "start": 1936,
+        "end": 1950
+      }
+    ]
+  },
+  {
+    "sample_id": "226ad00c-219d-481d-9fad-260b4ff5deb2",
+    "text": "Today, a customer named Mr. Anderson came to my garage with a problem with his car. He explained that his car was making a strange noise when he turned the steering wheel. I immediately got to work diagnosing the issue. After a thorough inspection, I discovered that the noise was coming from the power steering pump. My name is Tu Sasaki, and I've been working as a mechanic for 12 years now. Throughout my career, I've encountered numerous challenging projects, but this one stood out due to its co",
+    "false_positives": [
+      {
+        "type": "EMAIL",
+        "text": "tu_sasaki@outlook.gov",
+        "start": 1838,
+        "end": 1859
+      }
+    ],
+    "false_negatives": [
+      {
+        "type": "EMAIL",
+        "text": "tu_sasaki@outlook.gov.",
+        "start": 1838,
+        "end": 1860
+      }
+    ],
+    "predicted_entities": [
+      {
+        "type": "PHONE",
+        "text": "+86 16450 8250",
+        "start": 1803,
+        "end": 1817
+      },
+      {
+        "type": "EMAIL",
+        "text": "tu_sasaki@outlook.gov",
+        "start": 1838,
+        "end": 1859
+      }
+    ],
+    "ground_truth_entities": [
+      {
+        "type": "PHONE",
+        "text": "+86 16450 8250",
+        "start": 1803,
+        "end": 1817
+      },
+      {
+        "type": "EMAIL",
+        "text": "tu_sasaki@outlook.gov.",
+        "start": 1838,
+        "end": 1860
+      }
+    ]
+  },
+  {
+    "sample_id": "64a334e2-e6ba-4b64-bad4-2ff6865aa93e",
+    "text": "Manchu Suzuki, a skilled and dedicated bookkeeper, recently undertook a project that exemplifies his/her expertise in financial management and record-keeping. This project involved the complete overhaul of the accounting system for a local non-profit organization, the Willow Creek Community Center. The Willow Creek Community Center had been operating for over two decades, but their accounting practices had become outdated and inefficient. As a result, they were facing challenges in tracking thei",
+    "false_positives": [
+      {
+        "type": "PHONE",
+        "text": "0832 887 825",
+        "start": 2139,
+        "end": 2151
+      }
+    ],
+    "false_negatives": [
+      {
+        "type": "PHONE",
+        "text": "0832 887 825.",
+        "start": 2139,
+        "end": 2152
+      }
+    ],
+    "predicted_entities": [
+      {
+        "type": "EMAIL",
+        "text": "manchu_suzuki2187@gmail.edu",
+        "start": 2096,
+        "end": 2123
+      },
+      {
+        "type": "PHONE",
+        "text": "0832 887 825",
+        "start": 2139,
+        "end": 2151
+      }
+    ],
+    "ground_truth_entities": [
+      {
+        "type": "EMAIL",
+        "text": "manchu_suzuki2187@gmail.edu",
+        "start": 2096,
+        "end": 2123
+      },
+      {
+        "type": "PHONE",
+        "text": "0832 887 825.",
+        "start": 2139,
+        "end": 2152
+      }
+    ]
+  },
+  {
+    "sample_id": "648c909f-685b-43e5-98f9-b1debfe9ab5f",
+    "text": "As a skilled plumber with 9 years of experience, I've encountered various challenging and rewarding projects. One memorable job I undertook was at a local restaurant called \"The Flavor Haven\" located at 23 Birchwood Lane. The restaurant experienced persistent issues with their kitchen sink, causing water leakage and unpleasant odors. I received a call from the owner, Mrs. Sophia Rodriguez, who explained the problem and requested my assistance. Upon arriving at the restaurant, I promptly assessed",
+    "false_positives": [
+      {
+        "type": "PHONE",
+        "text": "(951) 349-7914",
+        "start": 1660,
+        "end": 1674
+      },
+      {
+        "type": "EMAIL",
+        "text": "justinweber@msn.edu",
+        "start": 1676,
+        "end": 1695
+      }
+    ],
+    "false_negatives": [
+      {
+        "type": "PHONE",
+        "text": "(951) 349-7914,",
+        "start": 1660,
+        "end": 1675
+      },
+      {
+        "type": "EMAIL",
+        "text": "justinweber@msn.edu.",
+        "start": 1676,
+        "end": 1696
+      }
+    ],
+    "predicted_entities": [
+      {
+        "type": "PHONE",
+        "text": "(951) 349-7914",
+        "start": 1660,
+        "end": 1674
+      },
+      {
+        "type": "EMAIL",
+        "text": "justinweber@msn.edu",
+        "start": 1676,
+        "end": 1695
+      }
+    ],
+    "ground_truth_entities": [
+      {
+        "type": "PHONE",
+        "text": "(951) 349-7914,",
+        "start": 1660,
+        "end": 1675
+      },
+      {
+        "type": "EMAIL",
+        "text": "justinweber@msn.edu.",
+        "start": 1676,
+        "end": 1696
+      }
+    ]
+  },
+  {
+    "sample_id": "ba5debb8-e4a0-4332-8c00-83b62285bc5d",
+    "text": "In my line of work as a translator, I often encounter challenging texts that require meticulous attention to detail and a deep understanding of multiple languages. One such project that stands out in my memory was the translation of a complex legal document from French to English. The document was riddled with technical terms and legal jargon, and the deadline was tight. With determination and a strong cup of coffee, I dove into the task. I meticulously dissected each sentence, deciphering the m",
+    "false_positives": [
+      {
+        "type": "EMAIL",
+        "text": "arthurluo@gmail.net",
+        "start": 1252,
+        "end": 1271
+      }
+    ],
+    "false_negatives": [
+      {
+        "type": "EMAIL",
+        "text": "arthurluo@gmail.net.",
+        "start": 1252,
+        "end": 1272
+      }
+    ],
+    "predicted_entities": [
+      {
+        "type": "EMAIL",
+        "text": "arthurluo@gmail.net",
+        "start": 1252,
+        "end": 1271
+      }
+    ],
+    "ground_truth_entities": [
+      {
+        "type": "EMAIL",
+        "text": "arthurluo@gmail.net.",
+        "start": 1252,
+        "end": 1272
+      }
+    ]
+  },
+  {
+    "sample_id": "ffacbfa2-fd35-4ac1-b975-a2cc41f56544",
+    "text": "During my 15-year career as a developer, I have had the opportunity to work on various projects, each presenting unique challenges and opportunities for growth. One particular project that stands out in my mind is the development of a custom inventory management system for a large manufacturing company. The company, located at 301 Southeast 37th Street, had been struggling with an outdated and inefficient inventory system that was causing delays in order fulfillment and costing them valuable tim",
+    "false_positives": [
+      {
+        "type": "EMAIL",
+        "text": "chloewhite@msn.edu",
+        "start": 2222,
+        "end": 2240
+      }
+    ],
+    "false_negatives": [
+      {
+        "type": "EMAIL",
+        "text": "chloewhite@msn.edu.",
+        "start": 2222,
+        "end": 2241
+      }
+    ],
+    "predicted_entities": [
+      {
+        "type": "PHONE",
+        "text": "(70) 98738-4976",
+        "start": 2191,
+        "end": 2206
+      },
+      {
+        "type": "EMAIL",
+        "text": "chloewhite@msn.edu",
+        "start": 2222,
+        "end": 2240
+      }
+    ],
+    "ground_truth_entities": [
+      {
+        "type": "PHONE",
+        "text": "(70) 98738-4976",
+        "start": 2191,
+        "end": 2206
+      },
+      {
+        "type": "EMAIL",
+        "text": "chloewhite@msn.edu.",
+        "start": 2222,
+        "end": 2241
+      }
+    ]
+  },
+  {
+    "sample_id": "956b56f8-d714-4d31-8673-2df73fc10f5c",
+    "text": "As an economist with over a decade of experience, I'm proud of the work I did on a project analyzing the impact of a new free trade agreement on the local economy. My name is Sushila Martinez, and I can be reached at sushila-martinez@gmail.edu or (440) 923-7737. My address is 11 Water Street. The project involved using econometric models to assess the potential economic impact of the agreement on various sectors of the economy. I gathered data from a variety of sources, including government stat",
+    "false_positives": [
+      {
+        "type": "PHONE",
+        "text": "(440) 923-7737",
+        "start": 247,
+        "end": 261
+      }
+    ],
+    "false_negatives": [
+      {
+        "type": "PHONE",
+        "text": "(440) 923-7737.",
+        "start": 247,
+        "end": 262
+      }
+    ],
+    "predicted_entities": [
+      {
+        "type": "EMAIL",
+        "text": "sushila-martinez@gmail.edu",
+        "start": 217,
+        "end": 243
+      },
+      {
+        "type": "PHONE",
+        "text": "(440) 923-7737",
+        "start": 247,
+        "end": 261
+      }
+    ],
+    "ground_truth_entities": [
+      {
+        "type": "EMAIL",
+        "text": "sushila-martinez@gmail.edu",
+        "start": 217,
+        "end": 243
+      },
+      {
+        "type": "PHONE",
+        "text": "(440) 923-7737.",
+        "start": 247,
+        "end": 262
+      }
+    ]
+  },
+  {
+    "sample_id": "d5323055-89d8-4b2c-b2b6-582c97df2210",
+    "text": "My name is Katsumi Sasaki, and I have been working as a veterinarian for six years. As a veterinarian, I've encountered various challenging and rewarding situations, but one project that stands out is the case of Bella, a golden retriever with a persistent skin infection. Bella was brought to my clinic by her owner, who was concerned about the incessant itching and irritation her beloved pet was experiencing. Upon examination, I discovered that Bella had developed a severe skin infection, charac",
+    "false_positives": [
+      {
+        "type": "EMAIL",
+        "text": "katsumi.sasaki@msn.gov",
+        "start": 2103,
+        "end": 2125
+      }
+    ],
+    "false_negatives": [
+      {
+        "type": "EMAIL",
+        "text": "katsumi.sasaki@msn.gov.",
+        "start": 2103,
+        "end": 2126
+      }
+    ],
+    "predicted_entities": [
+      {
+        "type": "PHONE",
+        "text": "+27 76 181 5878",
+        "start": 2067,
+        "end": 2082
+      },
+      {
+        "type": "EMAIL",
+        "text": "katsumi.sasaki@msn.gov",
+        "start": 2103,
+        "end": 2125
+      }
+    ],
+    "ground_truth_entities": [
+      {
+        "type": "PHONE",
+        "text": "+27 76 181 5878",
+        "start": 2067,
+        "end": 2082
+      },
+      {
+        "type": "EMAIL",
+        "text": "katsumi.sasaki@msn.gov.",
+        "start": 2103,
+        "end": 2126
+      }
+    ]
+  },
+  {
+    "sample_id": "c2f491bd-6bb6-456c-af78-039ad891acbc",
+    "text": "My name is Shanti Kimura, and I am a professional photographer specializing in capturing breathtaking moments and creating visually stunning imagery. As a dedicated photographer, I encounter various challenges that require problem-solving skills. In one memorable instance, I was tasked with photographing a product launch event for a prominent fashion brand. The challenge arose due to the event being held in a dimly lit venue, making it difficult to capture clear and well-lit shots. To overcome t",
+    "false_positives": [
+      {
+        "type": "EMAIL",
+        "text": "shanti_kimura@gmail.net",
+        "start": 1572,
+        "end": 1595
+      },
+      {
+        "type": "URL",
+        "text": "www.shanti-kimura.edu",
+        "start": 1737,
+        "end": 1758
+      }
+    ],
+    "false_negatives": [
+      {
+        "type": "EMAIL",
+        "text": "shanti_kimura@gmail.net,",
+        "start": 1572,
+        "end": 1596
+      },
+      {
+        "type": "URL",
+        "text": "www.shanti-kimura.edu,",
+        "start": 1737,
+        "end": 1759
+      }
+    ],
+    "predicted_entities": [
+      {
+        "type": "EMAIL",
+        "text": "shanti_kimura@gmail.net",
+        "start": 1572,
+        "end": 1595
+      },
+      {
+        "type": "URL",
+        "text": "www.shanti-kimura.edu",
+        "start": 1737,
+        "end": 1758
+      }
+    ],
+    "ground_truth_entities": [
+      {
+        "type": "EMAIL",
+        "text": "shanti_kimura@gmail.net,",
+        "start": 1572,
+        "end": 1596
+      },
+      {
+        "type": "URL",
+        "text": "www.shanti-kimura.edu,",
+        "start": 1737,
+        "end": 1759
+      }
+    ]
+  },
+  {
+    "sample_id": "5ced0a3d-9e71-42ef-94b2-1a0fc0429854",
+    "text": "In the bustling heart of the air traffic control tower, I, Yoshio Moore, stand as a vigilant sentinel, orchestrating the graceful dance of aircraft amidst the vast expanse of the sky. With a keen eye and unwavering focus, I meticulously monitor the movements of each plane, ensuring the safety and efficiency of every flight. One particular incident stands out in my memory, a moment when my skills and experience were put to the test. It was a stormy night, with dark clouds churning overhead and to",
+    "false_positives": [
+      {
+        "type": "EMAIL",
+        "text": "yoshio_moore1196@yahoo.net",
+        "start": 1728,
+        "end": 1754
+      }
+    ],
+    "false_negatives": [
+      {
+        "type": "EMAIL",
+        "text": "yoshio_moore1196@yahoo.net,",
+        "start": 1728,
+        "end": 1755
+      }
+    ],
+    "predicted_entities": [
+      {
+        "type": "EMAIL",
+        "text": "yoshio_moore1196@yahoo.net",
+        "start": 1728,
+        "end": 1754
+      }
+    ],
+    "ground_truth_entities": [
+      {
+        "type": "EMAIL",
+        "text": "yoshio_moore1196@yahoo.net,",
+        "start": 1728,
+        "end": 1755
+      }
+    ]
+  },
+  {
+    "sample_id": "5ca6bb88-8414-43ed-8306-a28d80abf528",
+    "text": "Mieko Tang, the efficient and dedicated secretary at GlobalTech Industries, recently took on a job-related project that showcased her exceptional organizational and communication skills. Her primary objective was to organize a crucial business conference, ensuring its smooth execution and successful outcomes. To kickstart the project, Mieko meticulously drafted a comprehensive plan outlining every aspect of the conference. She collaborated with the event planning team to secure a suitable venue,",
+    "false_positives": [
+      {
+        "type": "EMAIL",
+        "text": "miekotang@gmail.net",
+        "start": 1227,
+        "end": 1246
+      }
+    ],
+    "false_negatives": [
+      {
+        "type": "PHONE",
+        "text": "0628 7524235,",
+        "start": 1138,
+        "end": 1151
+      },
+      {
+        "type": "EMAIL",
+        "text": "miekotang@gmail.net.",
+        "start": 1227,
+        "end": 1247
+      }
+    ],
+    "predicted_entities": [
+      {
+        "type": "EMAIL",
+        "text": "miekotang@gmail.net",
+        "start": 1227,
+        "end": 1246
+      }
+    ],
+    "ground_truth_entities": [
+      {
+        "type": "PHONE",
+        "text": "0628 7524235,",
+        "start": 1138,
+        "end": 1151
+      },
+      {
+        "type": "EMAIL",
+        "text": "miekotang@gmail.net.",
+        "start": 1227,
+        "end": 1247
+      }
+    ]
+  },
+  {
+    "sample_id": "9e7512ac-019e-47ad-ad99-a8e22b40a6f5",
+    "text": "My name is Dolores Tang, and I have worked as a doctor for the last six years. One memorable job-related project that stands out in my mind is a health awareness campaign I spearheaded in my community. This project began when I noticed a concerning trend of rising cases of preventable diseases such as hypertension, diabetes, and obesity in my area. Determined to address this issue, I collaborated with a team of fellow healthcare professionals and community leaders to develop a comprehensive awar",
+    "false_positives": [
+      {
+        "type": "PHONE",
+        "text": "+86 11251 2534",
+        "start": 1851,
+        "end": 1865
+      }
+    ],
+    "false_negatives": [
+      {
+        "type": "PHONE",
+        "text": "+86 11251 2534.",
+        "start": 1851,
+        "end": 1866
+      }
+    ],
+    "predicted_entities": [
+      {
+        "type": "EMAIL",
+        "text": "dolorestang@gmail.gov",
+        "start": 1815,
+        "end": 1836
+      },
+      {
+        "type": "PHONE",
+        "text": "+86 11251 2534",
+        "start": 1851,
+        "end": 1865
+      }
+    ],
+    "ground_truth_entities": [
+      {
+        "type": "EMAIL",
+        "text": "dolorestang@gmail.gov",
+        "start": 1815,
+        "end": 1836
+      },
+      {
+        "type": "PHONE",
+        "text": "+86 11251 2534.",
+        "start": 1851,
+        "end": 1866
+      }
+    ]
+  },
+  {
+    "sample_id": "dd7fa807-9eb2-4f12-b1aa-e56e4d66bfd0",
+    "text": "I am Ram Jung, an individual passionate about technology and its ever-evolving landscape. My journey began in the vibrant streets of Seoul, South Korea, where I was raised in a home that fostered creativity and intellectual curiosity. As a child, I was fascinated by the intricate workings of electronic devices and spent countless hours tinkering with them. This fascination only intensified as I grew older, and it eventually led me to pursue a degree in computer science at the prestigious Seoul N",
+    "false_positives": [
+      {
+        "type": "PHONE",
+        "text": "0701 369 4303",
+        "start": 1895,
+        "end": 1908
+      }
+    ],
+    "false_negatives": [
+      {
+        "type": "PHONE",
+        "text": "0701 369 4303.",
+        "start": 1895,
+        "end": 1909
+      }
+    ],
+    "predicted_entities": [
+      {
+        "type": "EMAIL",
+        "text": "ram_jung@gmail.net",
+        "start": 1861,
+        "end": 1879
+      },
+      {
+        "type": "PHONE",
+        "text": "0701 369 4303",
+        "start": 1895,
+        "end": 1908
+      }
+    ],
+    "ground_truth_entities": [
+      {
+        "type": "EMAIL",
+        "text": "ram_jung@gmail.net",
+        "start": 1861,
+        "end": 1879
+      },
+      {
+        "type": "PHONE",
+        "text": "0701 369 4303.",
+        "start": 1895,
+        "end": 1909
+      }
+    ]
+  },
+  {
+    "sample_id": "40290f13-d144-4c0e-9e8b-194e10c401af",
+    "text": "My name is Paz Morozov and I am a highly accomplished and experienced professional with a proven track record of success in a variety of industries. With a passion for innovation and a commitment to excellence, I have consistently delivered exceptional results and made significant contributions to the organizations I have served. Throughout my career, I have demonstrated strong leadership and management skills, effectively motivating and guiding teams to achieve their full potential. I am adept ",
+    "false_positives": [
+      {
+        "type": "URL",
+        "text": "http://pmorozov.biz/home.html",
+        "start": 1839,
+        "end": 1868
+      },
+      {
+        "type": "EMAIL",
+        "text": "paz.morozov@msn.net",
+        "start": 1915,
+        "end": 1934
+      }
+    ],
+    "false_negatives": [
+      {
+        "type": "URL",
+        "text": "http://pmorozov.biz/home.html.",
+        "start": 1839,
+        "end": 1869
+      },
+      {
+        "type": "EMAIL",
+        "text": "paz.morozov@msn.net.",
+        "start": 1915,
+        "end": 1935
+      }
+    ],
+    "predicted_entities": [
+      {
+        "type": "URL",
+        "text": "http://pmorozov.biz/home.html",
+        "start": 1839,
+        "end": 1868
+      },
+      {
+        "type": "EMAIL",
+        "text": "paz.morozov@msn.net",
+        "start": 1915,
+        "end": 1934
+      }
+    ],
+    "ground_truth_entities": [
+      {
+        "type": "URL",
+        "text": "http://pmorozov.biz/home.html.",
+        "start": 1839,
+        "end": 1869
+      },
+      {
+        "type": "EMAIL",
+        "text": "paz.morozov@msn.net.",
+        "start": 1915,
+        "end": 1935
+      }
+    ]
+  },
+  {
+    "sample_id": "21ef0d5a-61da-4781-8e56-84ea7bb65f9c",
+    "text": "My name is Kong Inoue. I was born and raised in a small town in Japan. From an early age, I was fascinated by the world around me, and I loved to explore and learn new things. As I grew older, I developed a passion for writing and storytelling. I would often spend hours crafting stories and poems, and I dreamed of one day becoming a published author. My family and friends were always supportive of my writing, and they encouraged me to pursue my dreams. After graduating from high school, I moved ",
+    "false_positives": [
+      {
+        "type": "PHONE",
+        "text": "(81) 93047-6678 118",
+        "start": 1844,
+        "end": 1863
+      }
+    ],
+    "false_negatives": [
+      {
+        "type": "PHONE",
+        "text": "(81) 93047-6678",
+        "start": 1844,
+        "end": 1859
+      }
+    ],
+    "predicted_entities": [
+      {
+        "type": "PHONE",
+        "text": "(81) 93047-6678 118",
+        "start": 1844,
+        "end": 1863
+      },
+      {
+        "type": "EMAIL",
+        "text": "kong-inoue@aol.net",
+        "start": 1877,
+        "end": 1895
+      }
+    ],
+    "ground_truth_entities": [
+      {
+        "type": "PHONE",
+        "text": "(81) 93047-6678",
+        "start": 1844,
+        "end": 1859
+      },
+      {
+        "type": "EMAIL",
+        "text": "kong-inoue@aol.net",
+        "start": 1877,
+        "end": 1895
+      }
+    ]
+  },
+  {
+    "sample_id": "e04cf44e-f4ad-444b-acb0-41c072f71276",
+    "text": "I am Kenji Matsumoto, a seasoned fisherman with 11 years of experience. During my career, I have had the opportunity to embark on numerous projects that have enriched my skills and knowledge in the field. One project that stands out is the time I led a collaborative effort to develop a new type of fishing gear that would reduce bycatch, the unwanted capture of non-target species. My team and I spent several months researching, designing, and testing various prototypes until we came up with a mod",
+    "false_positives": [
+      {
+        "type": "EMAIL",
+        "text": "kenji_matsumoto4782@yahoo.org",
+        "start": 1624,
+        "end": 1653
+      }
+    ],
+    "false_negatives": [
+      {
+        "type": "EMAIL",
+        "text": "kenji_matsumoto4782@yahoo.org.",
+        "start": 1624,
+        "end": 1654
+      }
+    ],
+    "predicted_entities": [
+      {
+        "type": "PHONE",
+        "text": "+86 12479 7916",
+        "start": 1589,
+        "end": 1603
+      },
+      {
+        "type": "EMAIL",
+        "text": "kenji_matsumoto4782@yahoo.org",
+        "start": 1624,
+        "end": 1653
+      }
+    ],
+    "ground_truth_entities": [
+      {
+        "type": "PHONE",
+        "text": "+86 12479 7916",
+        "start": 1589,
+        "end": 1603
+      },
+      {
+        "type": "EMAIL",
+        "text": "kenji_matsumoto4782@yahoo.org.",
+        "start": 1624,
+        "end": 1654
+      }
+    ]
+  },
+  {
+    "sample_id": "1e1049dd-309d-45e4-a383-17f1c732601d",
+    "text": "My name is Xavier Watanabe, and I'm writing this biography to share my journey and experiences with the world. From my humble beginnings at 2543 The Meadows, life has taken me on an extraordinary adventure, shaping me into the person I am today. Growing up, I was always fascinated by the complexities of human behavior and the vastness of the universe. This curiosity led me to pursue a degree in psychology, where I delved into the depths of the human mind and the intricacies of interpersonal rela",
+    "false_positives": [],
+    "false_negatives": [
+      {
+        "type": "PHONE",
+        "text": "0250 5624828.",
+        "start": 2283,
+        "end": 2296
+      }
+    ],
+    "predicted_entities": [
+      {
+        "type": "EMAIL",
+        "text": "xavier.watanabe@gmail.com",
+        "start": 2254,
+        "end": 2279
+      }
+    ],
+    "ground_truth_entities": [
+      {
+        "type": "EMAIL",
+        "text": "xavier.watanabe@gmail.com",
+        "start": 2254,
+        "end": 2279
+      },
+      {
+        "type": "PHONE",
+        "text": "0250 5624828.",
+        "start": 2283,
+        "end": 2296
+      }
+    ]
+  },
+  {
+    "sample_id": "e752f0a8-d389-4af4-958c-173d90a2cd08",
+    "text": "As a detective, I've encountered my fair share of perplexing cases, but one that stands out is the mysterious disappearance of a valuable painting from the prestigious Han Art Gallery. My name is Ivan Song, and I reside at 1422 North Dawn Drive. You can reach me via email at ivan.song6195@msn.edu. The gallery owner, a prominent art collector named Mr. Chen, was beside himself when he discovered the masterpiece missing from its secure display. The painting, titled \"Tranquil Serenity,\" was not jus",
+    "false_positives": [
+      {
+        "type": "EMAIL",
+        "text": "ivan.song6195@msn.edu",
+        "start": 276,
+        "end": 297
+      }
+    ],
+    "false_negatives": [
+      {
+        "type": "EMAIL",
+        "text": "ivan.song6195@msn.edu.",
+        "start": 276,
+        "end": 298
+      }
+    ],
+    "predicted_entities": [
+      {
+        "type": "EMAIL",
+        "text": "ivan.song6195@msn.edu",
+        "start": 276,
+        "end": 297
+      }
+    ],
+    "ground_truth_entities": [
+      {
+        "type": "EMAIL",
+        "text": "ivan.song6195@msn.edu.",
+        "start": 276,
+        "end": 298
+      }
+    ]
+  },
+  {
+    "sample_id": "a5ba6e3e-3706-468b-81b9-4d30bdbbbb50",
+    "text": "My name is Xiang Jung and I'm a plumber with 14 years of experience. I've worked on a wide variety of projects, both big and small, and I'm always up for a challenge. One of my most memorable projects was a job I did for a local restaurant. The restaurant had been having problems with their drains for months, and they had tried everything to fix them. They had called in other plumbers, but no one had been able to solve the problem. I was called in as a last resort, and I quickly diagnosed the pr",
+    "false_positives": [
+      {
+        "type": "PHONE",
+        "text": "+27 32 160 4356",
+        "start": 1141,
+        "end": 1156
+      },
+      {
+        "type": "EMAIL",
+        "text": "xiangjung@outlook.net",
+        "start": 1161,
+        "end": 1182
+      }
+    ],
+    "false_negatives": [
+      {
+        "type": "PHONE",
+        "text": "+27 32 160 4356**",
+        "start": 1141,
+        "end": 1158
+      },
+      {
+        "type": "EMAIL",
+        "text": "**xiangjung@outlook.net**",
+        "start": 1159,
+        "end": 1184
+      }
+    ],
+    "predicted_entities": [
+      {
+        "type": "PHONE",
+        "text": "+27 32 160 4356",
+        "start": 1141,
+        "end": 1156
+      },
+      {
+        "type": "EMAIL",
+        "text": "xiangjung@outlook.net",
+        "start": 1161,
+        "end": 1182
+      }
+    ],
+    "ground_truth_entities": [
+      {
+        "type": "PHONE",
+        "text": "+27 32 160 4356**",
+        "start": 1141,
+        "end": 1158
+      },
+      {
+        "type": "EMAIL",
+        "text": "**xiangjung@outlook.net**",
+        "start": 1159,
+        "end": 1184
+      }
+    ]
+  },
+  {
+    "sample_id": "c66bfdfa-0f9c-4ba2-91f9-0db9b959749f",
+    "text": "My name is Xavier Kimura, and I am a pharmacist with 11 years of experience. I've worked in a variety of settings, including retail pharmacies, hospitals, and long-term care facilities. One of the most memorable projects I worked on was developing a new medication management program for a long-term care facility. The facility was struggling to keep track of its residents' medications. The old system was paper-based, and it was difficult for the staff to keep up with all the changes. As a result,",
+    "false_positives": [
+      {
+        "type": "EMAIL",
+        "text": "xavier-kimura@outlook.edu",
+        "start": 1485,
+        "end": 1510
+      },
+      {
+        "type": "URL",
+        "text": "www.xavier-kimura.com",
+        "start": 1545,
+        "end": 1566
+      }
+    ],
+    "false_negatives": [
+      {
+        "type": "EMAIL",
+        "text": "xavier-kimura@outlook.edu.",
+        "start": 1485,
+        "end": 1511
+      }
+    ],
+    "predicted_entities": [
+      {
+        "type": "PHONE",
+        "text": "0250 530 1581",
+        "start": 1456,
+        "end": 1469
+      },
+      {
+        "type": "EMAIL",
+        "text": "xavier-kimura@outlook.edu",
+        "start": 1485,
+        "end": 1510
+      },
+      {
+        "type": "URL",
+        "text": "www.xavier-kimura.com",
+        "start": 1545,
+        "end": 1566
+      }
+    ],
+    "ground_truth_entities": [
+      {
+        "type": "PHONE",
+        "text": "0250 530 1581",
+        "start": 1456,
+        "end": 1469
+      },
+      {
+        "type": "EMAIL",
+        "text": "xavier-kimura@outlook.edu.",
+        "start": 1485,
+        "end": 1511
+      }
+    ]
+  },
+  {
+    "sample_id": "b55289d7-b4f3-4360-a919-840e68b1b875",
+    "text": "As a designer with one year of experience, I am adept at creating visually appealing and engaging designs for a variety of mediums. One project that I am particularly proud of is the redesign of the company website for Acme Corporation. The existing website was outdated and difficult to navigate. I worked closely with the marketing team to understand their goals and objectives for the redesign. I then conducted extensive research on the company's target audience and competitors. Based on my find",
+    "false_positives": [
+      {
+        "type": "EMAIL",
+        "text": "santos@hotmail.edu",
+        "start": 1515,
+        "end": 1533
+      }
+    ],
+    "false_negatives": [
+      {
+        "type": "PHONE",
+        "text": "0851 9620965",
+        "start": 1492,
+        "end": 1504
+      }
+    ],
+    "predicted_entities": [
+      {
+        "type": "EMAIL",
+        "text": "santos@hotmail.edu",
+        "start": 1515,
+        "end": 1533
+      }
+    ],
+    "ground_truth_entities": [
+      {
+        "type": "PHONE",
+        "text": "0851 9620965",
+        "start": 1492,
+        "end": 1504
+      }
+    ]
+  },
+  {
+    "sample_id": "86a7184c-0117-40d9-9f67-d62fad77949f",
+    "text": "Aaliyah Keller, a skilled accountant with a keen eye for detail and a talent for financial analysis, embarked on a job-related project that showcased her exceptional abilities and dedication to her profession. In this project, Aaliyah was tasked with conducting a comprehensive financial audit for a prominent multinational corporation, XYZ Industries. Aaliyah began by meticulously reviewing the company's financial statements, including balance sheets, income statements, and cash flow statements, ",
+    "false_positives": [
+      {
+        "type": "PHONE",
+        "text": "+91-93973 49939",
+        "start": 1879,
+        "end": 1894
+      },
+      {
+        "type": "EMAIL",
+        "text": "aaliyah.keller3409@outlook.edu",
+        "start": 1912,
+        "end": 1942
+      }
+    ],
+    "false_negatives": [
+      {
+        "type": "PHONE",
+        "text": "+91-93973 49939,",
+        "start": 1879,
+        "end": 1895
+      },
+      {
+        "type": "EMAIL",
+        "text": "aaliyah.keller3409@outlook.edu.",
+        "start": 1912,
+        "end": 1943
+      }
+    ],
+    "predicted_entities": [
+      {
+        "type": "PHONE",
+        "text": "+91-93973 49939",
+        "start": 1879,
+        "end": 1894
+      },
+      {
+        "type": "EMAIL",
+        "text": "aaliyah.keller3409@outlook.edu",
+        "start": 1912,
+        "end": 1942
+      }
+    ],
+    "ground_truth_entities": [
+      {
+        "type": "PHONE",
+        "text": "+91-93973 49939,",
+        "start": 1879,
+        "end": 1895
+      },
+      {
+        "type": "EMAIL",
+        "text": "aaliyah.keller3409@outlook.edu.",
+        "start": 1912,
+        "end": 1943
+      }
+    ]
+  },
+  {
+    "sample_id": "fa1bcfd9-5856-49ef-a270-fc22b8b2aee4",
+    "text": "Ishaan Zhu, a shrewd businessman with a keen eye for opportunities, embarked on a significant job-related project in the past that showcased his entrepreneurial acumen and strategic thinking. The project involved the launch of a new product line for his company, Zhu Industries, a leading manufacturer of high-end consumer electronics. Ishaan identified a gap in the market for innovative and user-friendly smart home devices and decided to fill it with a range of products that would revolutionize t",
+    "false_positives": [
+      {
+        "type": "PHONE",
+        "text": "+91-59182 16495",
+        "start": 2634,
+        "end": 2649
+      },
+      {
+        "type": "EMAIL",
+        "text": "ishaan-zhu@outlook.com",
+        "start": 2676,
+        "end": 2698
+      }
+    ],
+    "false_negatives": [
+      {
+        "type": "PHONE",
+        "text": "+91-59182 16495,",
+        "start": 2634,
+        "end": 2650
+      },
+      {
+        "type": "EMAIL",
+        "text": "ishaan-zhu@outlook.com.",
+        "start": 2676,
+        "end": 2699
+      }
+    ],
+    "predicted_entities": [
+      {
+        "type": "PHONE",
+        "text": "+91-59182 16495",
+        "start": 2634,
+        "end": 2649
+      },
+      {
+        "type": "EMAIL",
+        "text": "ishaan-zhu@outlook.com",
+        "start": 2676,
+        "end": 2698
+      }
+    ],
+    "ground_truth_entities": [
+      {
+        "type": "PHONE",
+        "text": "+91-59182 16495,",
+        "start": 2634,
+        "end": 2650
+      },
+      {
+        "type": "EMAIL",
+        "text": "ishaan-zhu@outlook.com.",
+        "start": 2676,
+        "end": 2699
+      }
+    ]
+  },
+  {
+    "sample_id": "e40e2c04-a971-432b-ac25-a11eb9b5dfd7",
+    "text": "My name is Louis Tanaka, and I'm an outgoing and friendly individual who loves exploring new places and trying new things. Growing up, I had a strong passion for soccer and spent most of my free time honing my skills on the field. As I got older, I realized that my true calling lay in the realm of technology, specifically in software development. With an insatiable curiosity and a thirst for knowledge, I pursued a degree in computer science, where I immersed myself in the intricate world of codi",
+    "false_positives": [],
+    "false_negatives": [
+      {
+        "type": "PHONE",
+        "text": "0377 5370877.",
+        "start": 1497,
+        "end": 1510
+      }
+    ],
+    "predicted_entities": [
+      {
+        "type": "EMAIL",
+        "text": "louistanaka8467@msn.net",
+        "start": 1458,
+        "end": 1481
+      }
+    ],
+    "ground_truth_entities": [
+      {
+        "type": "EMAIL",
+        "text": "louistanaka8467@msn.net",
+        "start": 1458,
+        "end": 1481
+      },
+      {
+        "type": "PHONE",
+        "text": "0377 5370877.",
+        "start": 1497,
+        "end": 1510
+      }
+    ]
+  },
+  {
+    "sample_id": "1800c9ae-e617-4fc1-99f8-7184703b0072",
+    "text": "I am Ashok Volkova, a soul with a passion for exploring the intricate tapestry of life, one stitch at a time. My journey began in a small town where dreams were woven into the fabric of existence. From my early days, I was captivated by the stories whispered by the wind and the secrets held within each grain of sand. As I grew, my curiosity propelled me to unravel the mysteries of the world. I delved into books, seeking knowledge like a thirsty traveler searching for an oasis. Libraries became m",
+    "false_positives": [
+      {
+        "type": "EMAIL",
+        "text": "ashokvolkova@aol.com",
+        "start": 1534,
+        "end": 1554
+      }
+    ],
+    "false_negatives": [
+      {
+        "type": "EMAIL",
+        "text": "ashokvolkova@aol.com.",
+        "start": 1534,
+        "end": 1555
+      }
+    ],
+    "predicted_entities": [
+      {
+        "type": "PHONE",
+        "text": "(294) 232-2878",
+        "start": 1503,
+        "end": 1517
+      },
+      {
+        "type": "EMAIL",
+        "text": "ashokvolkova@aol.com",
+        "start": 1534,
+        "end": 1554
+      }
+    ],
+    "ground_truth_entities": [
+      {
+        "type": "PHONE",
+        "text": "(294) 232-2878",
+        "start": 1503,
+        "end": 1517
+      },
+      {
+        "type": "EMAIL",
+        "text": "ashokvolkova@aol.com.",
+        "start": 1534,
+        "end": 1555
+      }
+    ]
+  },
+  {
+    "sample_id": "65c2ddd6-ab0e-47c4-9b21-cb2b265afe0c",
+    "text": "During my tenure as a fisherman with two years of hands-on experience, I had the opportunity to lead a project that involved enhancing the efficiency of our fishing operations. My name is Fa Lambert, and I can be reached at (744) 383-4575 or via email at fa.lambert@yahoo.edu. I reside at 3142 West Finger Road, and in my spare time, I enjoy engaging in video production as a hobby. The objective of this project was to implement a new technique for catching fish that would minimize bycatch, reduce ",
+    "false_positives": [
+      {
+        "type": "EMAIL",
+        "text": "fa.lambert@yahoo.edu",
+        "start": 255,
+        "end": 275
+      }
+    ],
+    "false_negatives": [
+      {
+        "type": "EMAIL",
+        "text": "fa.lambert@yahoo.edu.",
+        "start": 255,
+        "end": 276
+      }
+    ],
+    "predicted_entities": [
+      {
+        "type": "PHONE",
+        "text": "(744) 383-4575",
+        "start": 224,
+        "end": 238
+      },
+      {
+        "type": "EMAIL",
+        "text": "fa.lambert@yahoo.edu",
+        "start": 255,
+        "end": 275
+      }
+    ],
+    "ground_truth_entities": [
+      {
+        "type": "PHONE",
+        "text": "(744) 383-4575",
+        "start": 224,
+        "end": 238
+      },
+      {
+        "type": "EMAIL",
+        "text": "fa.lambert@yahoo.edu.",
+        "start": 255,
+        "end": 276
+      }
+    ]
+  },
+  {
+    "sample_id": "413e486e-d355-4d41-bb9e-260bd7ecbf46",
+    "text": "In the cosmos, where mysteries abound, I, Yuze Yamamoto, embark on a quest to unravel the enigmatic. With my abode at 12610 Webber Road, I traverse the vast expanse of knowledge, seeking answers to perplexing celestial phenomena. Through the lens of my telescope, I peer into the depths of the universe, where stars twinkle and galaxies dance. In the realm of astronomy, I encounter a perplexing puzzle. A distant star, known as Polaris, exhibits peculiar behavior. Its luminosity fluctuates erratica",
+    "false_positives": [
+      {
+        "type": "EMAIL",
+        "text": "yuzeyamamoto@gmail.com",
+        "start": 1804,
+        "end": 1826
+      }
+    ],
+    "false_negatives": [
+      {
+        "type": "EMAIL",
+        "text": "yuzeyamamoto@gmail.com.",
+        "start": 1804,
+        "end": 1827
+      }
+    ],
+    "predicted_entities": [
+      {
+        "type": "EMAIL",
+        "text": "yuzeyamamoto@gmail.com",
+        "start": 1804,
+        "end": 1826
+      }
+    ],
+    "ground_truth_entities": [
+      {
+        "type": "EMAIL",
+        "text": "yuzeyamamoto@gmail.com.",
+        "start": 1804,
+        "end": 1827
+      }
+    ]
+  },
+  {
+    "sample_id": "3c8d9f33-12b9-4793-b21b-69b9e282af44",
+    "text": "In a bustling city filled with towering skyscrapers and charming neighborhoods, Guo Hayashi, a skilled and dedicated carpenter, embarked on a memorable project that would leave a lasting impact on the community. With a passion for transforming wood into functional and aesthetically pleasing creations, Hayashi's expertise was highly sought after by those seeking to enhance their living spaces. Equipped with a toolbox filled with various tools and an unwavering commitment to excellence, Hayashi ar",
+    "false_positives": [
+      {
+        "type": "PHONE",
+        "text": "+86 14454 4408",
+        "start": 1805,
+        "end": 1819
+      }
+    ],
+    "false_negatives": [
+      {
+        "type": "PHONE",
+        "text": "+86 14454 4408,",
+        "start": 1805,
+        "end": 1820
+      }
+    ],
+    "predicted_entities": [
+      {
+        "type": "PHONE",
+        "text": "+86 14454 4408",
+        "start": 1805,
+        "end": 1819
+      }
+    ],
+    "ground_truth_entities": [
+      {
+        "type": "PHONE",
+        "text": "+86 14454 4408,",
+        "start": 1805,
+        "end": 1820
+      }
+    ]
+  },
+  {
+    "sample_id": "7ca43041-3b8e-4406-8d44-b647cdd64ab7",
+    "text": "I am Wei Pereira, a highly motivated and results-driven individual with a passion for making a positive impact in the world. I reside at 6407 West Monte Cristo Avenue, and can be reached via email at wei.pereira@yahoo.gov or by phone at +27 30 725 6174. Throughout my life, I have consistently demonstrated exceptional leadership, problem-solving, and analytical skills. My academic journey began with a Bachelor's degree, followed by a Master's degree, both of which I pursued with unwavering dedica",
+    "false_positives": [
+      {
+        "type": "PHONE",
+        "text": "+27 30 725 6174",
+        "start": 237,
+        "end": 252
+      }
+    ],
+    "false_negatives": [
+      {
+        "type": "PHONE",
+        "text": "+27 30 725 6174.",
+        "start": 237,
+        "end": 253
+      }
+    ],
+    "predicted_entities": [
+      {
+        "type": "EMAIL",
+        "text": "wei.pereira@yahoo.gov",
+        "start": 200,
+        "end": 221
+      },
+      {
+        "type": "PHONE",
+        "text": "+27 30 725 6174",
+        "start": 237,
+        "end": 252
+      }
+    ],
+    "ground_truth_entities": [
+      {
+        "type": "EMAIL",
+        "text": "wei.pereira@yahoo.gov",
+        "start": 200,
+        "end": 221
+      },
+      {
+        "type": "PHONE",
+        "text": "+27 30 725 6174.",
+        "start": 237,
+        "end": 253
+      }
+    ]
+  },
+  {
+    "sample_id": "d123c40a-8985-4aa4-ba7b-5c1f61902b57",
+    "text": "Sure, here's a detailed example of a job-related project Angelina Fontaine did in the past, including the information you provided: My name is Angelina Fontaine and I am a dedicated editor with over 9 years of experience. I've had the opportunity to work on various projects throughout my career, and one that stands out is my involvement in the editing and publication of the local historical society's annual journal. As an avid member of the local historical society, I've always been passionate a",
+    "false_positives": [
+      {
+        "type": "EMAIL",
+        "text": "angelina_fontaine@outlook.net",
+        "start": 2808,
+        "end": 2837
+      },
+      {
+        "type": "PHONE",
+        "text": "(84) 95275-6007",
+        "start": 2853,
+        "end": 2868
+      }
+    ],
+    "false_negatives": [
+      {
+        "type": "PHONE",
+        "text": "(84) 95275-6007.",
+        "start": 2853,
+        "end": 2869
+      }
+    ],
+    "predicted_entities": [
+      {
+        "type": "EMAIL",
+        "text": "angelina_fontaine@outlook.net",
+        "start": 2808,
+        "end": 2837
+      },
+      {
+        "type": "PHONE",
+        "text": "(84) 95275-6007",
+        "start": 2853,
+        "end": 2868
+      }
+    ],
+    "ground_truth_entities": [
+      {
+        "type": "PHONE",
+        "text": "(84) 95275-6007.",
+        "start": 2853,
+        "end": 2869
+      }
+    ]
+  },
+  {
+    "sample_id": "858b6d1a-fe7a-442c-be28-63a855fc1536",
+    "text": "In my first year as a veterinarian, I had the opportunity to work on a challenging and rewarding project involving a beloved family pet named Luna. Luna, a playful Golden Retriever, was brought to our animal clinic by her worried owners due to a sudden loss of appetite and lethargy. As I examined Luna, I noticed several unusual symptoms, including swollen lymph nodes and a fever. I suspected an underlying infection and decided to run a series of tests, including blood work and X-rays. The result",
+    "false_positives": [
+      {
+        "type": "PHONE",
+        "text": "065-7459-9228",
+        "start": 1967,
+        "end": 1980
+      },
+      {
+        "type": "EMAIL",
+        "text": "kuo-wagner@hotmail.org",
+        "start": 1982,
+        "end": 2004
+      }
+    ],
+    "false_negatives": [
+      {
+        "type": "PHONE",
+        "text": "065-7459-9228,",
+        "start": 1967,
+        "end": 1981
+      },
+      {
+        "type": "EMAIL",
+        "text": "kuo-wagner@hotmail.org,",
+        "start": 1982,
+        "end": 2005
+      }
+    ],
+    "predicted_entities": [
+      {
+        "type": "PHONE",
+        "text": "065-7459-9228",
+        "start": 1967,
+        "end": 1980
+      },
+      {
+        "type": "EMAIL",
+        "text": "kuo-wagner@hotmail.org",
+        "start": 1982,
+        "end": 2004
+      }
+    ],
+    "ground_truth_entities": [
+      {
+        "type": "PHONE",
+        "text": "065-7459-9228,",
+        "start": 1967,
+        "end": 1981
+      },
+      {
+        "type": "EMAIL",
+        "text": "kuo-wagner@hotmail.org,",
+        "start": 1982,
+        "end": 2005
+      }
+    ]
+  },
+  {
+    "sample_id": "655fcf0c-a895-46af-a34a-5c8dc151f674",
+    "text": "My name is Boris Taylor, and I am a coach who specializes in helping people overcome challenges and achieve their goals. Recently, I had a client who came to me with a very specific problem: he was constantly feeling overwhelmed and unable to focus on his work. My email address is boristaylor539@hotmail.net, and I can be reached at my office located at 1007 Ash Street. After some initial discussions with my client, I realized that the root of his problem was that he was trying to do too many thi",
+    "false_positives": [
+      {
+        "type": "EMAIL",
+        "text": "boristaylor539@hotmail.net",
+        "start": 282,
+        "end": 308
+      }
+    ],
+    "false_negatives": [
+      {
+        "type": "EMAIL",
+        "text": "boristaylor539@hotmail.net,",
+        "start": 282,
+        "end": 309
+      }
+    ],
+    "predicted_entities": [
+      {
+        "type": "EMAIL",
+        "text": "boristaylor539@hotmail.net",
+        "start": 282,
+        "end": 308
+      }
+    ],
+    "ground_truth_entities": [
+      {
+        "type": "EMAIL",
+        "text": "boristaylor539@hotmail.net,",
+        "start": 282,
+        "end": 309
+      }
+    ]
+  },
+  {
+    "sample_id": "f22411f7-3db2-45d9-9494-7b21fdd560cd",
+    "text": "My name is Jesus Gonzalez, and I'm a psychiatrist. My job is to help people who are struggling with mental health issues. I recently had a patient who was experiencing severe anxiety. She was constantly worried about everything, and she couldn't sleep at night. She had been to other doctors, but they hadn't been able to help her. I started by talking to her about her anxiety. I wanted to understand what was causing it and how it was affecting her life. I also did a physical exam to rule out any ",
+    "false_positives": [
+      {
+        "type": "EMAIL",
+        "text": "jesusgonzalez1064@yahoo.org",
+        "start": 1149,
+        "end": 1176
+      }
+    ],
+    "false_negatives": [
+      {
+        "type": "EMAIL",
+        "text": "jesusgonzalez1064@yahoo.org.",
+        "start": 1149,
+        "end": 1177
+      }
+    ],
+    "predicted_entities": [
+      {
+        "type": "EMAIL",
+        "text": "jesusgonzalez1064@yahoo.org",
+        "start": 1149,
+        "end": 1176
+      }
+    ],
+    "ground_truth_entities": [
+      {
+        "type": "EMAIL",
+        "text": "jesusgonzalez1064@yahoo.org.",
+        "start": 1149,
+        "end": 1177
+      }
+    ]
+  },
+  {
+    "sample_id": "5c60b90b-088f-4a56-92aa-dbb16064d0fe",
+    "text": "My name is Boris Yu, and I am an individual of multifarious interests and experiences. I have journeyed through various domains of knowledge, amassing a diverse array of skills and perspectives. My intellectual pursuits have taken me through the intricate world of quantum mechanics, where I delved into the profound mysteries of the universe's smallest constituents. I have also navigated the complexities of financial markets, seeking to decipher the patterns and fluctuations that govern economic ",
+    "false_positives": [
+      {
+        "type": "PHONE",
+        "text": "0841 892 142",
+        "start": 1475,
+        "end": 1487
+      },
+      {
+        "type": "EMAIL",
+        "text": "borisyu7505@hotmail.gov",
+        "start": 1501,
+        "end": 1524
+      }
+    ],
+    "false_negatives": [
+      {
+        "type": "PHONE",
+        "text": "0841 892 142,",
+        "start": 1475,
+        "end": 1488
+      },
+      {
+        "type": "EMAIL",
+        "text": "borisyu7505@hotmail.gov,",
+        "start": 1501,
+        "end": 1525
+      }
+    ],
+    "predicted_entities": [
+      {
+        "type": "PHONE",
+        "text": "0841 892 142",
+        "start": 1475,
+        "end": 1487
+      },
+      {
+        "type": "EMAIL",
+        "text": "borisyu7505@hotmail.gov",
+        "start": 1501,
+        "end": 1524
+      }
+    ],
+    "ground_truth_entities": [
+      {
+        "type": "PHONE",
+        "text": "0841 892 142,",
+        "start": 1475,
+        "end": 1488
+      },
+      {
+        "type": "EMAIL",
+        "text": "borisyu7505@hotmail.gov,",
+        "start": 1501,
+        "end": 1525
+      }
+    ]
+  },
+  {
+    "sample_id": "29f1eb00-c405-458c-a25c-3960692740b7",
+    "text": "I'm Kyle Chen, an engineer with a passion for solving complex technical problems. I live at 2032 Gorgas Street, and you can reach me via email at kylechen5632@yahoo.com. In my recent project, I encountered a persistent issue with a critical software component that caused intermittent failures. After extensive debugging and analysis, I discovered that the issue originated from a memory management error that occurred under specific conditions. I applied my expertise in systems programming and iden",
+    "false_positives": [
+      {
+        "type": "EMAIL",
+        "text": "kylechen5632@yahoo.com",
+        "start": 146,
+        "end": 168
+      }
+    ],
+    "false_negatives": [
+      {
+        "type": "EMAIL",
+        "text": "kylechen5632@yahoo.com.",
+        "start": 146,
+        "end": 169
+      }
+    ],
+    "predicted_entities": [
+      {
+        "type": "EMAIL",
+        "text": "kylechen5632@yahoo.com",
+        "start": 146,
+        "end": 168
+      }
+    ],
+    "ground_truth_entities": [
+      {
+        "type": "EMAIL",
+        "text": "kylechen5632@yahoo.com.",
+        "start": 146,
+        "end": 169
+      }
+    ]
+  }
+]

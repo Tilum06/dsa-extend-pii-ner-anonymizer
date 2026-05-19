@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PII Detection & Anonymization Demo</title>
+    <title>PII Guard - Privacy Console</title>
     <meta name="description" content="Phát hiện và ẩn danh thông tin cá nhân (PII) trong văn bản sử dụng NER rule-based.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -13,82 +13,109 @@
 <body>
     <div class="container">
         <header>
-            <div class="header-icon">🛡️</div>
-            <h1>PII Detection & Anonymization</h1>
-            <p class="subtitle">Phát hiện và ẩn danh thông tin cá nhân bằng NER rule-based</p>
+            <div class="header-content">
+                <div>
+                    <h1>PII Guard</h1>
+                    <p class="header-desc">Rule-based Detection & Anonymization Console</p>
+                </div>
+                <div class="tech-badges">
+                    <span class="badge">Regex</span>
+                    <span class="badge">Context Rules</span>
+                    <span class="badge">NER</span>
+                </div>
+            </div>
         </header>
 
-        <main>
-            <div class="input-section">
-                <label for="inputText">
-                    <span class="label-icon">📝</span> Nhập văn bản:
-                </label>
-                <textarea 
-                    id="inputText" 
-                    placeholder="Nhập đoạn văn bản chứa thông tin cá nhân... (Ctrl+Enter để xử lý)"
-                    rows="6"
-                ></textarea>
-                <div class="button-group">
-                    <button id="processBtn" onclick="processText()">
-                        <span class="btn-icon">⚡</span> Xử lý
-                    </button>
-                    <button id="clearBtn" onclick="clearAll()">
-                        <span class="btn-icon">🗑️</span> Xóa
-                    </button>
-                </div>
-            </div>
+        <main class="app-layout">
+            <!-- Left: Input & Results -->
+            <div class="main-workspace">
+                <!-- Input Section -->
+                <section class="panel input-panel">
+                    <div class="panel-header">
+                        <h2>Input Document</h2>
+                        <p>Paste raw text to detect personal identifiable information.</p>
+                    </div>
+                    <textarea 
+                        id="inputText" 
+                        placeholder="Paste text here..."
+                        rows="8"
+                    ></textarea>
+                    <div class="button-group">
+                        <button id="processBtn" class="btn btn-primary" onclick="processText()">
+                            Detect PII
+                        </button>
+                        <button id="clearBtn" class="btn btn-secondary" onclick="clearAll()">
+                            Clear
+                        </button>
+                        <button id="sampleBtn" class="btn btn-ghost" onclick="loadSample()">
+                            Load Sample
+                        </button>
+                    </div>
+                </section>
 
-            <div id="loadingSpinner" class="loading hidden">
-                <div class="spinner"></div>
-                <p>Đang xử lý...</p>
-            </div>
-
-            <div id="errorSection" class="error-section hidden">
-                <div class="error-message">
-                    <span class="error-icon">⚠️</span>
-                    <p id="errorText"></p>
-                </div>
-            </div>
-
-            <div id="resultSection" class="result-section hidden">
-                <!-- Highlighted tokens display -->
-                <div class="output-section highlighted-section">
-                    <h2><span class="section-icon">🎯</span> Văn bản đã đánh dấu:</h2>
-                    <div id="highlightedText" class="highlighted-text"></div>
-                    <div class="entity-legend" id="entityLegend"></div>
+                <!-- Loading Indicator -->
+                <div id="loadingSpinner" class="loading hidden">
+                    <div class="spinner"></div>
+                    <p>Detecting entities...</p>
                 </div>
 
-                <!-- Anonymized text -->
-                <div class="output-section anonymized-section">
-                    <h2><span class="section-icon">🔒</span> Văn bản ẩn danh:</h2>
-                    <div id="anonymizedText" class="output-text mono-text"></div>
-                </div>
-
-                <!-- Entities table -->
-                <div class="entities-section">
-                    <h2><span class="section-icon">📋</span> Các thực thể được phát hiện:</h2>
-                    <div id="entitiesContainer" class="entities-container">
-                        <table id="entitiesTable">
-                            <thead>
-                                <tr>
-                                    <th>Loại</th>
-                                    <th>Nội dung</th>
-                                    <th>Vị trí bắt đầu</th>
-                                    <th>Vị trí kết thúc</th>
-                                </tr>
-                            </thead>
-                            <tbody id="entitiesBody">
-                            </tbody>
-                        </table>
+                <!-- Error Section -->
+                <div id="errorSection" class="error-section hidden">
+                    <div class="error-message">
+                        <p id="errorText"></p>
                     </div>
                 </div>
 
-                <div class="action-buttons">
-                    <button id="copyBtn" onclick="copyToClipboard()">
-                        <span class="btn-icon">📋</span> Sao chép văn bản xử lý
-                    </button>
+                <!-- Result Section with Tabs -->
+                <div id="resultSection" class="result-section hidden">
+                    <div class="result-tabs">
+                        <button class="tab-btn active" data-tab="tagged">Tagged Text</button>
+                        <button class="tab-btn" data-tab="anonymized">Anonymized Text</button>
+                    </div>
+
+                    <!-- Tab Content: Tagged Text -->
+                    <div id="tab-tagged" class="tab-content active">
+                        <div class="output-box">
+                            <div id="highlightedText" class="highlighted-text"></div>
+                            <div id="entityLegend" class="entity-legend"></div>
+                        </div>
+                    </div>
+
+                    <!-- Tab Content: Anonymized Text -->
+                    <div id="tab-anonymized" class="tab-content">
+                        <div class="output-box">
+                            <div id="anonymizedText" class="output-text mono-text"></div>
+                            <button id="copyBtn" class="btn btn-copy" onclick="copyToClipboard()">
+                                Copy Result
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
+
+            <!-- Right: Detection Summary -->
+            <aside id="summaryPanel" class="summary-panel panel">
+                <h2>Detection Summary</h2>
+                
+                <div class="total-box">
+                    <span>Total Entities</span>
+                    <strong id="totalEntities">0</strong>
+                </div>
+
+                <div class="entity-stats">
+                    <h3>Entity Count</h3>
+                    <ul>
+                        <li><span class="stat-dot" style="background: #3b82f6;"></span> NAME <strong id="count-NAME">0</strong></li>
+                        <li><span class="stat-dot" style="background: #f59e0b;"></span> EMAIL <strong id="count-EMAIL">0</strong></li>
+                        <li><span class="stat-dot" style="background: #10b981;"></span> PHONE <strong id="count-PHONE">0</strong></li>
+                        <li><span class="stat-dot" style="background: #a855f7;"></span> ADDRESS <strong id="count-ADDRESS">0</strong></li>
+                        <li><span class="stat-dot" style="background: #ec4899;"></span> USERNAME <strong id="count-USERNAME">0</strong></li>
+                        <li><span class="stat-dot" style="background: #06b6d4;"></span> URL <strong id="count-URL">0</strong></li>
+                        <li><span class="stat-dot" style="background: #14b8a6;"></span> ORGANIZATION <strong id="count-ORGANIZATION">0</strong></li>
+                        <li><span class="stat-dot" style="background: #38bdf8;"></span> LOCATION <strong id="count-LOCATION">0</strong></li>
+                    </ul>
+                </div>
+            </aside>
         </main>
 
         <footer>
@@ -96,6 +123,7 @@
         </footer>
     </div>
 
+    <script src="{{ url_for('static', filename='samples.js') }}"></script>
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>

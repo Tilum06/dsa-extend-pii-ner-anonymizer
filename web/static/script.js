@@ -4,18 +4,23 @@
  */
 
 /* ============================================================
-   Entity colour map (must match CSS variables)
+   Entity colour map
    ============================================================ */
 const ENTITY_COLORS = {
-    EMAIL:    { color: '#f59e0b', bg: 'rgba(245,158,11,0.15)' },
-    URL:      { color: '#06b6d4', bg: 'rgba(6,182,212,0.15)'  },
-    PHONE:    { color: '#10b981', bg: 'rgba(16,185,129,0.15)' },
-    ADDRESS:  { color: '#f97316', bg: 'rgba(249,115,22,0.15)' },
-    ORGANIZATION: { color: '#14b8a6', bg: 'rgba(20,184,166,0.15)' },
-    LOCATION: { color: '#38bdf8', bg: 'rgba(56,189,248,0.15)' },
-    NAME:     { color: '#ec4899', bg: 'rgba(236,72,153,0.15)' },
-    USERNAME: { color: '#8b5cf6', bg: 'rgba(139,92,246,0.15)' },
+    NAME:         { color: '#3b82f6', bg: 'rgba(59,130,246,0.18)' },
+    EMAIL:        { color: '#f59e0b', bg: 'rgba(245,158,11,0.18)' },
+    PHONE:        { color: '#10b981', bg: 'rgba(16,185,129,0.18)' },
+    ADDRESS:      { color: '#a855f7', bg: 'rgba(168,85,247,0.18)' },
+    USERNAME:     { color: '#ec4899', bg: 'rgba(236,72,153,0.18)' },
+    URL:          { color: '#06b6d4', bg: 'rgba(6,182,212,0.18)' },
+    ORGANIZATION: { color: '#14b8a6', bg: 'rgba(20,184,166,0.18)' },
+    LOCATION:     { color: '#38bdf8', bg: 'rgba(56,189,248,0.18)' },
 };
+
+/* ============================================================
+   State
+   ============================================================ */
+let currentResults = null;
 
 /* ============================================================
    Core: Process text
@@ -24,7 +29,7 @@ async function processText() {
     const inputText = document.getElementById('inputText').value.trim();
 
     if (!inputText) {
-        showError('Vui lòng nhập văn bản để xử lý');
+        showError('Please enter text to process');
         return;
     }
 
@@ -45,12 +50,13 @@ async function processText() {
 
         const data = await response.json();
         hideLoading();
+        currentResults = data;
         displayResults(data);
 
     } catch (error) {
         hideLoading();
         console.error('Error:', error);
-        showError(`Lỗi xử lý: ${error.message}`);
+        showError(`Error processing: ${error.message}`);
     }
 }
 
@@ -58,7 +64,8 @@ async function processText() {
    Display results
    ============================================================ */
 function displayResults(data) {
-    const resultSection  = document.getElementById('resultSection');
+    const resultSection = document.getElementById('resultSection');
+    const summaryPanel = document.getElementById('summaryPanel');
 
     // --- Highlighted tokens ---
     renderHighlightedTokens(data.token_entities || []);
@@ -66,17 +73,21 @@ function displayResults(data) {
     // --- Anonymized text ---
     document.getElementById('anonymizedText').textContent = data.anonymized_text;
 
-    // --- Entities table ---
-    renderEntitiesTable(data.entities || []);
+    // --- Update summary panel ---
+    updateSummaryPanel(data.entities || []);
 
-    // --- Show section ---
+    // --- Show sections ---
     resultSection.classList.remove('hidden');
+    summaryPanel.classList.remove('hidden');
+
+    // Switch to first tab
+    switchTab('tagged');
 }
 
 /* ---- Highlighted inline tokens ---- */
 function renderHighlightedTokens(tokenEntities) {
     const container = document.getElementById('highlightedText');
-    const legend    = document.getElementById('entityLegend');
+    const legend = document.getElementById('entityLegend');
     container.innerHTML = '';
     legend.innerHTML = '';
 
@@ -90,8 +101,7 @@ function renderHighlightedTokens(tokenEntities) {
             // Extract base entity type from BIO label (e.g. "B-NAME" → "NAME")
             const baseType = item.label.replace(/^[BI]-/, '');
             span.classList.add('entity', `entity-${baseType}`);
-            span.innerHTML = escapeHtml(item.token) +
-                `<span class="entity-label">${escapeHtml(item.label)}</span>`;
+            span.textContent = escapeHtml(item.token);
             seenTypes.add(baseType);
         } else {
             span.textContent = item.token;
@@ -116,30 +126,75 @@ function renderHighlightedTokens(tokenEntities) {
     }
 }
 
-/* ---- Entities table ---- */
-function renderEntitiesTable(entities) {
-    const tbody = document.getElementById('entitiesBody');
-    tbody.innerHTML = '';
-
-    if (!entities.length) {
-        const row = document.createElement('tr');
-        row.innerHTML = `<td colspan="4" style="text-align:center;color:var(--text-muted);padding:24px;">
-            Không phát hiện thông tin cá nhân</td>`;
-        tbody.appendChild(row);
-        return;
-    }
-
+/* ---- Summary Panel ---- */
+function updateSummaryPanel(entities) {
+    const totalEl = document.getElementById('totalEntities');
+    const entityTypes = ['NAME', 'EMAIL', 'PHONE', 'ADDRESS', 'USERNAME', 'URL', 'ORGANIZATION', 'LOCATION'];
+    
+    // Count entities by type
+    const counts = {};
+    entityTypes.forEach(type => counts[type] = 0);
+    
     entities.forEach(entity => {
-        const row = document.createElement('tr');
-        row.innerHTML = `
-            <td><span class="entity-badge entity-badge-${escapeHtml(entity.type)}">${escapeHtml(entity.type)}</span></td>
-            <td>${escapeHtml(entity.text)}</td>
-            <td>${entity.start}</td>
-            <td>${entity.end}</td>
-        `;
-        tbody.appendChild(row);
+        if (counts.hasOwnProperty(entity.type)) {
+            counts[entity.type]++;
+        }
+    });
+
+    // Update total
+    totalEl.textContent = entities.length;
+
+    // Update individual counts
+    entityTypes.forEach(type => {
+        const el = document.getElementById(`count-${type}`);
+        if (el) {
+            el.textContent = counts[type];
+        }
     });
 }
+
+/* ============================================================
+   Tabs
+   ============================================================ */
+function switchTab(tabName) {
+    // Hide all tabs
+    document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.classList.remove('active');
+    });
+
+    // Remove active state from all buttons
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+
+    // Show selected tab
+    const tabEl = document.getElementById(`tab-${tabName}`);
+    if (tabEl) {
+        tabEl.classList.add('active');
+    }
+
+    // Mark button as active
+    const btnEl = document.querySelector(`[data-tab="${tabName}"]`);
+    if (btnEl) {
+        btnEl.classList.add('active');
+    }
+}
+
+// Tab button listeners
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            switchTab(btn.dataset.tab);
+        });
+    });
+
+    // Keyboard shortcut for process
+    document.getElementById('inputText').addEventListener('keydown', e => {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+            processText();
+        }
+    });
+});
 
 /* ============================================================
    UI helpers
@@ -167,27 +222,36 @@ function clearError() {
 function clearAll() {
     document.getElementById('inputText').value = '';
     document.getElementById('resultSection').classList.add('hidden');
+    document.getElementById('summaryPanel').classList.add('hidden');
     clearError();
+    currentResults = null;
+}
+
+/* ---- Load Sample ---- */
+function loadSample() {
+    const sample = SAMPLE_TEXTS[Math.floor(Math.random() * SAMPLE_TEXTS.length)];
+    document.getElementById('inputText').value = sample;
+    document.getElementById('inputText').focus();
 }
 
 /* ---- Copy to clipboard ---- */
 function copyToClipboard() {
     const text = document.getElementById('anonymizedText').textContent;
     if (!text) {
-        showError('Không có văn bản để sao chép');
+        showError('No text to copy');
         return;
     }
 
     navigator.clipboard.writeText(text)
         .then(() => {
             const btn = document.getElementById('copyBtn');
-            const orig = btn.innerHTML;
-            btn.innerHTML = '<span class="btn-icon">✅</span> Đã sao chép!';
-            setTimeout(() => { btn.innerHTML = orig; }, 2000);
+            const orig = btn.textContent;
+            btn.textContent = '✓ Copied!';
+            setTimeout(() => { btn.textContent = orig; }, 2000);
         })
         .catch(err => {
             console.error('Failed to copy:', err);
-            showError('Không thể sao chép văn bản');
+            showError('Unable to copy text');
         });
 }
 
@@ -196,14 +260,3 @@ function escapeHtml(text) {
     const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
     return String(text).replace(/[&<>"']/g, m => map[m]);
 }
-
-/* ============================================================
-   Keyboard shortcut: Ctrl+Enter to process
-   ============================================================ */
-document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('inputText').addEventListener('keydown', e => {
-        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-            processText();
-        }
-    });
-});
